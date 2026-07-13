@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import LandingPage from "./pages/public/LandingPage";
+import DevComponentsPage from "./pages/dev/DevComponentsPage";
+import DevAppShellPage from "./pages/dev/DevAppShellPage";
 
 function App() {
   return (
@@ -15,15 +17,9 @@ function App() {
         }
       />
 
-      {/* Placeholder route for smoke test */}
-      <Route
-        path="/placeholder"
-        element={
-          <div className="flex items-center justify-center min-h-screen">
-            <h1 className="text-2xl font-bold">Hello Compass</h1>
-          </div>
-        }
-      />
+      {/* Dev routes — excluded from sitemap, not production */}
+      <Route path="/dev/components" element={<DevComponentsPage />} />
+      <Route path="/dev/app-shell" element={<DevAppShellPage />} />
     </Routes>
   );
 }
