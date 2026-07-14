@@ -52,9 +52,9 @@
   --radius: 0.5rem;
   --primary: oklch(0.323 0.134 264.38);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.541 0.281 293.01);
+  --secondary: oklch(0.45 0.18 264.38);
   --secondary-foreground: oklch(0.985 0 0);
-  --ai: oklch(0.541 0.281 293.01);
+  --ai: oklch(0.45 0.18 264.38);
   --ai-foreground: oklch(0.985 0 0);
   --warning: oklch(0.696 0.17 47.6);
   --warning-foreground: oklch(0.985 0 0);
@@ -75,7 +75,7 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.323 0.134 264.38);
   --chart-1: oklch(0.323 0.134 264.38);
-  --chart-2: oklch(0.541 0.281 293.01);
+  --chart-2: oklch(0.45 0.18 264.38);
   --chart-3: oklch(0.546 0.2 145.69);
   --chart-4: oklch(0.696 0.17 47.6);
   --chart-5: oklch(0.577 0.245 27.325);
@@ -92,9 +92,9 @@
 .dark {
   --primary: oklch(0.55 0.2 264.38);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.65 0.25 293.01);
+  --secondary: oklch(0.6 0.18 264.38);
   --secondary-foreground: oklch(0.985 0 0);
-  --ai: oklch(0.65 0.25 293.01);
+  --ai: oklch(0.6 0.18 264.38);
   --ai-foreground: oklch(0.985 0 0);
   --warning: oklch(0.75 0.183 55.17);
   --warning-foreground: oklch(0.145 0 0);
@@ -115,7 +115,7 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.55 0.2 264.38);
   --chart-1: oklch(0.55 0.2 264.38);
-  --chart-2: oklch(0.65 0.25 293.01);
+  --chart-2: oklch(0.6 0.18 264.38);
   --chart-3: oklch(0.65 0.24 145.69);
   --chart-4: oklch(0.75 0.183 55.17);
   --chart-5: oklch(0.704 0.191 22.216);
@@ -161,7 +161,7 @@
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, oklch(0.323 0.134 264.38) 0%, oklch(0.4 0.2 290) 50%, oklch(0.541 0.281 293.01) 100%);
+  background: linear-gradient(135deg, oklch(0.323 0.134 264.38) 0%, oklch(0.4 0.18 264.38) 50%, oklch(0.5 0.2 264.38) 100%);
 }
 
 @keyframes ai-shimmer {
@@ -169,7 +169,7 @@
   100% { background-position: 200% 0; }
 }
 .ai-shimmer {
-  background: linear-gradient(90deg, transparent, oklch(0.541 0.281 293.01 / 10%), transparent);
+  background: linear-gradient(90deg, transparent, oklch(0.5 0.2 264.38 / 10%), transparent);
   background-size: 200% 100%;
   animation: ai-shimmer 2s infinite;
 }

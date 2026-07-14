@@ -9,10 +9,7 @@ import HeroStats from "./HeroStats";
 import { ROUTES } from "@/routes";
 
 const features = [
-  "Academic Risk Prediction",
-  "Career Recommendations",
-  "AI Research Assistant",
-  "Smart Exam Generation",
+
 ];
 
 const container = {

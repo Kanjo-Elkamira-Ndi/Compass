@@ -1,0 +1,217 @@
+# Plan: Convert Next.js Frontend to Vite + React SPA
+
+## Context
+
+The `frontend/` directory is currently a **Next.js 16 App Router** project, but the project specs (`context/file-structure.md`, `context/frontend-roadmap.md`, `context/ui-context.md`) define it as a **Vite + React SPA** with React Router 6. The Next.js app is actually already an SPA in disguise — it uses a single `page.tsx` with a custom `RouterContext` for client-side routing, zero server components, zero server-side data fetching, and zero file-based routing. The only Next.js-specific dependencies actually used in component code are `next-themes` (3 files) and `next/font/google` (1 file, layout.tsx). Everything else (shadcn/ui components, contexts, hooks, lib, mock data) is framework-agnostic.
+
+**User constraints:** No Prisma — use raw PostgreSQL instead. Keep everything else per context specs.
+
+---
+
+## Step 1: Clean out Next.js scaffolding
+
+**Delete these files/directories:**
+- `next.config.ts`
+- `next-env.d.ts`
+- `src/app/` (entire directory — layout.tsx, page.tsx, globals.css, api/)
+- `prisma/` (entire directory — schema.prisma)
+- `src/lib/db.ts` (Prisma singleton)
+- `db/` (SQLite database file)
+- `Caddyfile`
+- `.zscripts/`
+- `examples/`
+- `mini-services/`
+- `download/`
+- `dev.log`
+- `tool-results/`
+- `bun.lock`
+- `components.json` (will regenerate with Vite-compatible config)
+- `.env` (contains Prisma SQLite URL — will replace)
+- `eslint.config.mjs` (Next.js-specific config — will replace)
+
+---
+
+## Step 2: Scaffold Vite + React 19 + TypeScript
+
+Create fresh Vite project files:
+
+- **`package.json`** — New deps keeping the same packages the Next.js app actually uses (Radix UI, CVA, clsx, tailwind-merge, cmdk, date-fns, embla-carousel-react, framer-motion, lucide-react, react-day-picker, react-hook-form, react-markdown, react-resizable-panels, react-syntax-highlighter, recharts, sonner, vaul, zod, zustand, @dnd-kit/*, @tanstack/react-query, @tanstack/react-table, input-otp, @hookform/resolvers, @mdxeditor/editor). Remove: `next`, `next-auth`, `next-intl`, `next-themes`, `prisma`, `@prisma/client`, `sharp`, `bun-types`, `eslint-config-next`, `@tailwindcss/postcss`, `z-ai-web-dev-sdk`, `@reactuses/core`. Add: `vite`, `@vitejs/plugin-react`, `react-router-dom`, `msw` (dev), `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` (dev), `prettier`, `prettier-plugin-tailwindcss` (dev). Scripts: `dev`, `build`, `preview`, `lint`, `test`, `typecheck`.
+- **`vite.config.ts`** — `@vitejs/plugin-react`, path alias `@` → `./src`, proxy `/api` → `http://localhost:8080`.
+- **`tsconfig.json`** — Remove `next` plugin, keep `@/*` path alias, target ES2022.
+- **`tsconfig.app.json`** — Vite-style app config.
+- **`tsconfig.node.json`** — Vite-style node config for vite.config.ts.
+- **`postcss.config.js`** — `@tailwindcss/postcss` + `tailwindcss-animate`.
+- **`tailwind.config.ts`** — Same content as current (v3-style config that's inert under v4, kept for shadcn CLI compatibility).
+- **`eslint.config.js`** — Replace Next.js ESLint config with Vite-friendly flat config.
+- **`.prettierrc`** — With `prettier-plugin-tailwindcss`.
+- **`index.html`** — Vite entry HTML at project root (not in public/).
+- **`public/logo.svg`** — Keep existing.
+- **`public/robots.txt`** — Keep existing.
+- **`public/mockServiceWorker.js`** — Generate via `npx msw init`.
+
+---
+
+## Step 3: Create Vite entry points
+
+- **`src/main.tsx`** — Mount `<App />` into `#root`, import `./index.css`.
+- **`src/index.css`** — Move content from `src/app/globals.css` (Tailwind v4 imports, CSS variables, custom animations). Remove `@import "tw-animate-css"` if incompatible, replace with direct Tailwind animate utilities.
+- **`src/App.tsx`** — React Router setup:
+  ```
+  <ThemeProvider> (from src/contexts/theme-context.tsx — new, replaces next-themes)
+  <AuthProvider>
+    <RouterProvider> (from react-router-dom BrowserRouter)
+      <Routes>
+        {/* Public layout routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          ...
+        </Route>
+        {/* Auth routes (centered card, no layout) */}
+        <Route path="/login" element={<LoginPage />} />
+        ...
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShell />}>
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            ...
+          </Route>
+        </Route>
+      </Routes>
+    </RouterProvider>
+  </AuthProvider>
+  </ThemeProvider>
+  ```
+- **`src/vite-env.d.ts`** — Vite client types reference.
+
+---
+
+## Step 4: Create theme context (replaces next-themes)
+
+- **`src/contexts/theme-context.tsx`** — Simple React context with `theme`, `setTheme`, `resolvedTheme`. Reads from `localStorage`, applies `.dark` class to `<html>`. Matches `next-themes` API shape so the 3 consuming components need minimal changes.
+
+---
+
+## Step 5: Convert routing (RouterContext → React Router)
+
+- **Delete** `src/contexts/router-context.tsx` (replaced by react-router-dom).
+- **Update `src/contexts/auth-context.tsx`** — Remove `'use client'` directive. Keep everything else (it's pure React).
+- **Update `src/types/index.ts`** (new file) — Move `AppRoute` type from `src/lib/api/types.ts`, keep as a union type for reference but routes are now actual URL paths.
+- **Update all navigation calls** across every component:
+  - `navigate('landing')` → `navigate('/')`  (using `useNavigate()` from react-router-dom)
+  - `navigate('login')` → `navigate('/login')`
+  - `navigate('student/dashboard')` → `navigate('/student/dashboard')`
+  - `currentRoute === 'landing'` → `useLocation().pathname === '/'`
+  - `goBack()` → `navigate(-1)`
+- **Update `src/components/layouts/public-layout.tsx`** — Replace `useRouter()` from custom context with `useNavigate()` + `useLocation()` from react-router-dom. Replace `next-themes` import with new theme context.
+- **Update `src/components/layouts/app-shell.tsx`** — Same routing conversion.
+- **Update `src/components/shared/theme-toggle.tsx`** — Replace `next-themes` with new theme context.
+- **Update `src/components/ui/sonner.tsx`** — Replace `next-themes` with new theme context.
+- **Update `src/app/page.tsx` logic → `src/App.tsx`** — The `RouteContent` component's role-based guards move into a `<ProtectedRoute>` component.
+
+---
+
+## Step 6: Reorganize file structure per context/file-structure.md
+
+**Move files to match the spec:**
+
+| Current (Next.js) | Target (React/Vite) |
+|---|---|
+| `src/components/public/landing.tsx` | `src/pages/public/LandingPage.tsx` |
+| `src/components/public/features.tsx` | `src/pages/public/FeaturesPage.tsx` |
+| `src/components/public/about.tsx` | `src/pages/public/AboutPage.tsx` |
+| `src/components/public/faq.tsx` | `src/pages/public/FaqPage.tsx` |
+| `src/components/public/contact.tsx` | `src/pages/public/ContactPage.tsx` |
+| `src/components/auth/login.tsx` | `src/pages/auth/LoginPage.tsx` |
+| `src/components/auth/register.tsx` | `src/pages/auth/RegisterPage.tsx` |
+| `src/components/auth/forgot-password.tsx` | `src/pages/auth/ForgotPasswordPage.tsx` |
+| `src/components/auth/reset-password.tsx` | `src/pages/auth/ResetPasswordPage.tsx` |
+| `src/components/student/dashboard.tsx` | `src/pages/student/StudentDashboard.tsx` |
+| `src/components/student/courses.tsx` | `src/pages/student/StudentCoursesPage.tsx` |
+| `src/components/student/results.tsx` | `src/pages/student/StudentResultsPage.tsx` |
+| `src/components/student/profile.tsx` | `src/pages/student/StudentProfilePage.tsx` |
+| `src/components/lecturer/dashboard.tsx` | `src/pages/lecturer/LecturerDashboard.tsx` |
+| `src/components/lecturer/students.tsx` | `src/pages/lecturer/LecturerStudentsPage.tsx` |
+| `src/components/lecturer/courses.tsx` | `src/pages/lecturer/LecturerCoursesPage.tsx` |
+| `src/components/ai/chat.tsx` | `src/pages/ai/AIChatPage.tsx` |
+| `src/components/ai/risk.tsx` | `src/pages/ai/RiskPage.tsx` |
+| `src/components/ai/research.tsx` | `src/pages/ai/ResearchPage.tsx` |
+| `src/components/ai/exam-generator.tsx` | `src/pages/ai/ExamGeneratorPage.tsx` |
+| `src/components/ai/career.tsx` | `src/pages/ai/CareerPage.tsx` |
+| `src/components/admin/users.tsx` | `src/pages/admin/AdminUsersPage.tsx` |
+| `src/components/admin/courses.tsx` | `src/pages/admin/AdminCoursesPage.tsx` |
+| `src/components/admin/rag.tsx` | `src/pages/admin/AdminRagPage.tsx` |
+| `src/components/ui/*` | `src/components/ui/*` (keep) |
+| `src/components/shared/*` | `src/components/shared/*` (keep) |
+| `src/components/layouts/*` | `src/layouts/*` |
+| `src/lib/api/*` | `src/api/*` (client, types, mock-data, handlers) |
+| `src/lib/utils.ts` | `src/lib/utils.ts` (keep) |
+| `src/hooks/*` | `src/hooks/*` (keep) |
+
+**New files to create:**
+- `src/components/ProtectedRoute.tsx` — Auth + role guard, extracted from `page.tsx`'s `RouteContent`.
+- `src/routes/index.ts` — Route path constants (single source of truth).
+- `src/api/handlers.ts` — MSW request handlers (convert mock client to MSW handlers).
+- `src/api/browser.ts` — MSW browser worker setup.
+
+---
+
+## Step 7: Convert API layer (mock client → Axios + MSW)
+
+- **`src/api/client.ts`** — Axios instance with `baseURL: import.meta.env.VITE_API_BASE_URL`, interceptors for token attachment and 401 refresh.
+- **`src/api/auth.ts`** — Auth API functions (login, register, etc.) using the Axios client.
+- **`src/api/students.ts`** — Student API functions.
+- **`src/api/courses.ts`** — Course API functions.
+- **`src/api/performance.ts`** — Grade/GPA API functions.
+- **`src/api/ai.ts`** — AI module API functions.
+- **`src/api/admin.ts`** — Admin API functions.
+- **`src/api/public.ts`** — Public site API functions.
+- **`src/api/handlers.ts`** — MSW handlers matching `context/api-reference.md` shapes, using the existing mock data.
+- **`src/api/types.ts`** — Keep existing types, remove `AppRoute` (moves to routes/).
+- **`src/api/mock-data.ts`** — Keep existing mock data.
+- Remove `src/lib/db.ts` (Prisma).
+
+---
+
+## Step 8: Update all component imports
+
+Every component that imports from `@/contexts/router-context` needs to switch to `react-router-dom`:
+- `useRouter()` → `useNavigate()` + `useLocation()` + `useParams()`
+- `navigate('route-name')` → `navigate('/path')`
+- `currentRoute` → `useLocation().pathname`
+
+Every component that imports from `next-themes` needs to switch to `@/contexts/theme-context`.
+
+Remove all `'use client'` directives (they're Next.js RSC markers, meaningless in Vite).
+
+---
+
+## Step 9: Verify build, lint, test
+
+- `npm run build` — Vite production build succeeds.
+- `npm run lint` — ESLint clean.
+- `npm run test` — Vitest tests pass (migrate existing tests to work with React Router).
+- `npm run typecheck` — TypeScript compilation clean.
+
+---
+
+## Step 10: Commit and push
+
+Single commit with clear message describing the conversion.
+
+---
+
+## Key decisions
+
+1. **Theme handling**: Create a lightweight `ThemeContext` that mirrors `next-themes` API (same `useTheme` hook shape) so consuming components need only an import path change, not a logic rewrite.
+2. **Routing**: Keep the same URL paths as the context spec (`/`, `/login`, `/student/dashboard`, etc.) — the Next.js app was already using these as route names, just via a custom context.
+3. **MSW**: Move from the mock `client.ts` (which wraps `setTimeout` + mock data) to proper MSW handlers that intercept `fetch`/`axios` calls — matching the frontend-roadmap.md spec.
+4. **No Prisma**: Delete all Prisma files. The mock data layer stays as-is (it's the dev placeholder until the real backend exists). No raw PostgreSQL client added yet — that's backend territory.
+5. **shadcn/ui components**: Keep all 37+ UI primitives as-is — they have zero Next.js dependencies.
+6. **Tailwind v4**: Keep the same CSS-first config in `index.css` (moved from `globals.css`). The `tailwind.config.ts` stays for shadcn CLI compatibility.
+
+## Files modified (est.)
+- ~35 files moved/renamed
+- ~15 files edited (import path changes, directive removal)
+- ~12 files deleted (Next.js scaffolding, Prisma)
+- ~10 files created (Vite config, entry points, theme context, ProtectedRoute, MSW setup)

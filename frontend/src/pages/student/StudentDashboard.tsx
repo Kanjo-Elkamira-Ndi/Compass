@@ -43,7 +43,7 @@ const chartConfig = {
   },
   cumulativeGpa: {
     label: 'Cumulative GPA',
-    color: 'hsl(262, 83%, 58%)', // violet
+    color: 'oklch(0.45 0.18 264.38)', // blue (matches secondary)
   },
 } satisfies ChartConfig;
 

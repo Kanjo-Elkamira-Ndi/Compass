@@ -21,9 +21,9 @@ const slides: SlideData[] = [
   {
     title: "GPA Trends",
     description:
-      "Track your academic performance across semesters with visual trend analysis.",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&h=600&fit=crop&crop=center&q=80",
-    imageAlt: "African students studying together in a modern university setting",
+  'Personalized career recommendations based on your academic profile.',
+    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop&crop=center&q=80',
+    imageAlt: 'African graduates celebrating their achievement'
   },
   {
     title: "Career Paths",
