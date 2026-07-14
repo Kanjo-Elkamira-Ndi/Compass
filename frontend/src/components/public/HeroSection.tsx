@@ -31,9 +31,19 @@ export default function HeroSection() {
 
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-          {/* Left — Text */}
+          {/* Right — Carousel (first on mobile, second on desktop) */}
           <motion.div
-            className="space-y-8"
+            className="relative lg:pt-14 order-1 lg:order-2"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+          >
+            <HeroCarousel />
+          </motion.div>
+
+          {/* Left — Text (second on mobile, first on desktop) */}
+          <motion.div
+            className="space-y-8 order-2 lg:order-1"
             variants={container}
             initial="hidden"
             animate="show"
@@ -90,15 +100,7 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right — Carousel */}
-          <motion.div
-            className="relative lg:pt-14"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
-          >
-            <HeroCarousel />
-          </motion.div>
+
         </div>
 
         {/* Scroll hint */}
