@@ -2,19 +2,10 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  MessageSquare,
-  TrendingUp,
-  Briefcase,
-  FileText,
-} from "lucide-react";
 
 interface SlideData {
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
-  gradient: string;
-  accent: string;
   image: string;
   imageAlt: string;
 }
@@ -24,127 +15,49 @@ const slides: SlideData[] = [
     title: "AI Academic Chat",
     description:
       "Ask any academic question and get instant, context-aware guidance powered by AI.",
-    icon: MessageSquare,
-    gradient: "from-primary/10 via-primary/5 to-transparent",
-    accent: "bg-primary",
     image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop&crop=center&q=80",
-    imageAlt: "African university students collaborating with technology"
+    imageAlt: "African university students collaborating with technology",
   },
   {
     title: "GPA Trends",
     description:
       "Track your academic performance across semesters with visual trend analysis.",
-    icon: TrendingUp,
-    gradient: "from-success/10 via-success/5 to-transparent",
-    accent: "bg-success",
     image: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&h=600&fit=crop&crop=center&q=80",
-    imageAlt: "African students studying together in a modern university setting"
+    imageAlt: "African students studying together in a modern university setting",
   },
   {
     title: "Career Paths",
     description:
       "Discover ranked career recommendations based on your courses, skills, and grades.",
-    icon: Briefcase,
-    gradient: "from-secondary/10 via-secondary/5 to-transparent",
-    accent: "bg-secondary",
     image: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&h=600&fit=crop&crop=center&q=80",
-    imageAlt: "African graduates celebrating their achievement"
+    imageAlt: "African graduates celebrating their achievement",
   },
   {
     title: "Research Assistant",
     description:
       "Upload research papers and receive AI-powered summaries, key findings, and gaps.",
-    icon: FileText,
-    gradient: "from-warning/10 via-warning/5 to-transparent",
-    accent: "bg-warning",
     image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&h=600&fit=crop&crop=center&q=80",
-    imageAlt: "African students researching and studying in a library"
+    imageAlt: "African students researching and studying in a library",
   },
 ];
 
 function CarouselCard({ slide }: { slide: SlideData }) {
-  const Icon = slide.icon;
-
   return (
     <div className="w-full h-full select-none">
-      <div
-        className={`relative w-full h-full rounded-3xl bg-gradient-to-br ${slide.gradient} border border-border/60 overflow-hidden`}
-      >
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/60 to-background/30" />
-          <img 
-            src={slide.image} 
-            alt={slide.imageAlt}
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Top bar mockup */}
-        <div className="relative z-10 flex items-center gap-2 px-5 pt-5 pb-3">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-destructive/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
-          </div>
-          <div className="flex-1 mx-8">
-            <div className="h-5 rounded-full bg-muted/60 max-w-[180px] mx-auto backdrop-blur-sm" />
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div className="relative z-10 px-5 pb-5 flex flex-col h-[calc(100%-44px)]">
-          {/* Mock sidebar + content */}
-          <div className="flex gap-3 flex-1">
-            {/* Sidebar mock */}
-            <div className="hidden sm:flex flex-col gap-2 w-12 pt-2">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-8 h-8 rounded-lg ${
-                    i === 0 ? `${slide.accent}/20 backdrop-blur-sm` : "bg-muted/40 backdrop-blur-sm"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Main content mock */}
-            <div className="flex-1 space-y-3 backdrop-blur-sm">
-              {/* Header */}
-              <div className="flex items-center gap-2">
-                <div className={`p-2 rounded-xl ${slide.accent}/15 backdrop-blur-sm`}>
-                  <Icon size={16} className={`${slide.accent.replace("bg-", "text-")}`} />
-                </div>
-                <div className="h-4 bg-foreground/20 rounded-full w-32 backdrop-blur-sm" />
-              </div>
-
-              {/* Cards */}
-              <div className="grid grid-cols-2 gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-xl bg-card/60 backdrop-blur-sm border border-border/40 p-3 space-y-2"
-                  >
-                    <div className="h-2 bg-muted/60 rounded-full w-16" />
-                    <div className="h-3 bg-foreground/20 rounded-full w-full" />
-                    <div className="h-3 bg-foreground/10 rounded-full w-3/4" />
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom bar */}
-              <div className="flex gap-2 pt-1">
-                <div className="h-8 rounded-lg bg-muted/40 backdrop-blur-sm flex-1" />
-                <div className={`h-8 rounded-lg ${slide.accent}/20 backdrop-blur-sm w-20`} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative corner glow */}
-        <div
-          className={`absolute -bottom-20 -right-20 w-40 h-40 rounded-full ${slide.accent}/10 blur-3xl`}
+      <div className="relative w-full h-full rounded-3xl border border-border/60 overflow-hidden">
+        {/* Background Image */}
+        <img
+          src={slide.image}
+          alt={slide.imageAlt}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
         />
+
+        {/* Title overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/60 to-transparent">
+          <h3 className="text-white font-semibold text-lg">{slide.title}</h3>
+          <p className="text-white/80 text-sm mt-1">{slide.description}</p>
+        </div>
       </div>
     </div>
   );
