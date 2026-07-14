@@ -4,6 +4,7 @@ import { MessageSquare, ShieldAlert, FileSearch, FileText, Briefcase, ArrowRight
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import HeroSection from '@/components/public/HeroSection';
 
 /* ─── Feature data ─── */
 const FEATURES = [
@@ -136,51 +137,7 @@ export function LandingPage() {
   return (
     <div>
       {/* ─── Hero ─── */}
-      <section className="hero-gradient relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-white/5 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-40 -left-40 size-[28rem] rounded-full bg-secondary/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8 lg:py-40">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="mx-auto max-w-3xl text-center"
-          >
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Your AI-Powered
-              <br />
-              Academic Compass
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed text-white/80 sm:text-xl">
-              Navigate your university journey with intelligent insights, personalized
-              recommendations, and real-time risk assessment.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 font-semibold"
-                onClick={() => navigate('/register')}
-                aria-label="Create your account"
-              >
-                Create your account
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10"
-                onClick={() => navigate('/login')}
-                aria-label="Sign in to your account"
-              >
-                Sign in
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* ─── Feature Grid ─── */}
       <section className="py-20 sm:py-28">
