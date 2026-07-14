@@ -7,23 +7,19 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
-  RESET_PASSWORD: "/reset-password/:token",
-
+  RESET_PASSWORD: "/reset-password",
   STUDENT_DASHBOARD: "/student/dashboard",
   STUDENT_COURSES: "/student/courses",
   STUDENT_RESULTS: "/student/results",
   STUDENT_PROFILE: "/student/profile",
-
   LECTURER_DASHBOARD: "/lecturer/dashboard",
   LECTURER_STUDENTS: "/lecturer/students",
   LECTURER_COURSES: "/lecturer/courses",
-
   AI_CHAT: "/ai/chat",
   AI_RISK: "/ai/risk",
-  AI_CAREER: "/ai/career",
   AI_RESEARCH: "/ai/research",
   AI_EXAM_GENERATOR: "/ai/exam-generator",
-
+  AI_CAREER: "/ai/career",
   ADMIN_USERS: "/admin/users",
   ADMIN_COURSES: "/admin/courses",
   ADMIN_RAG: "/admin/rag",

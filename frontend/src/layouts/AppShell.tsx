@@ -1,193 +1,285 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import {
+  Navigation,
+  LayoutDashboard,
+  BookOpen,
+  BarChart3,
+  User,
+  MessageSquare,
+  ShieldAlert,
+  FileSearch,
+  Briefcase,
+  Users,
+  Calendar,
+  FileText,
+  Database,
+  Menu,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { ROUTES } from "@/routes";
-import {
-  LayoutDashboard,
-  BookOpen,
-  GraduationCap,
-  User,
-  Users,
-  BookMarked,
-  MessageSquare,
-  Shield,
-  Target,
-  FlaskConical,
-  FileText,
-  Upload,
-  Menu,
-  LogOut,
-} from "lucide-react";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { useAuth } from "@/contexts/auth-context";
+import type { Role } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+  icon: React.ElementType;
 }
 
 const STUDENT_NAV: NavItem[] = [
-  { label: "Dashboard", href: ROUTES.STUDENT_DASHBOARD, icon: LayoutDashboard },
-  { label: "Courses", href: ROUTES.STUDENT_COURSES, icon: BookOpen },
-  { label: "Results", href: ROUTES.STUDENT_RESULTS, icon: GraduationCap },
-  { label: "Profile", href: ROUTES.STUDENT_PROFILE, icon: User },
+  { label: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
+  { label: "Courses", path: "/student/courses", icon: BookOpen },
+  { label: "Results", path: "/student/results", icon: BarChart3 },
+  { label: "Profile", path: "/student/profile", icon: User },
+  { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
+  { label: "Risk Assessment", path: "/ai/risk", icon: ShieldAlert },
+  { label: "Research Assistant", path: "/ai/research", icon: FileSearch },
+  { label: "Career Advisor", path: "/ai/career", icon: Briefcase },
 ];
 
 const LECTURER_NAV: NavItem[] = [
-  { label: "Dashboard", href: ROUTES.LECTURER_DASHBOARD, icon: LayoutDashboard },
-  { label: "Students", href: ROUTES.LECTURER_STUDENTS, icon: Users },
-  { label: "Courses", href: ROUTES.LECTURER_COURSES, icon: BookMarked },
-];
-
-const AI_NAV: NavItem[] = [
-  { label: "Chat", href: ROUTES.AI_CHAT, icon: MessageSquare },
-  { label: "Risk", href: ROUTES.AI_RISK, icon: Shield },
-  { label: "Career", href: ROUTES.AI_CAREER, icon: Target },
-  { label: "Research", href: ROUTES.AI_RESEARCH, icon: FlaskConical },
-  { label: "Exam Gen", href: ROUTES.AI_EXAM_GENERATOR, icon: FileText },
+  { label: "Dashboard", path: "/lecturer/dashboard", icon: LayoutDashboard },
+  { label: "Students", path: "/lecturer/students", icon: Users },
+  { label: "Courses", path: "/lecturer/courses", icon: BookOpen },
+  { label: "Timetable", path: "/lecturer/courses", icon: Calendar },
+  { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
+  { label: "Exam Generator", path: "/ai/exam-generator", icon: FileText },
 ];
 
 const ADMIN_NAV: NavItem[] = [
-  { label: "Users", href: ROUTES.ADMIN_USERS, icon: Users },
-  { label: "Courses", href: ROUTES.ADMIN_COURSES, icon: BookMarked },
-  { label: "RAG Upload", href: ROUTES.ADMIN_RAG, icon: Upload },
+  { label: "Users", path: "/admin/users", icon: Users },
+  { label: "Courses", path: "/admin/courses", icon: BookOpen },
+  { label: "RAG Documents", path: "/admin/rag", icon: Database },
 ];
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const location = useLocation();
+const NAV_BY_ROLE: Record<Role, NavItem[]> = {
+  STUDENT: STUDENT_NAV,
+  LECTURER: LECTURER_NAV,
+  ADMIN: ADMIN_NAV,
+};
 
-  const renderSection = (title: string, items: NavItem[]) => (
-    <div className="mb-4">
-      <h4 className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-        {title}
-      </h4>
-      <ul className="space-y-0.5">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.href;
-          return (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                onClick={onNavigate}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
+const PROFILE_ROUTE: Record<Role, string> = {
+  STUDENT: "/student/profile",
+  LECTURER: "/lecturer/dashboard",
+  ADMIN: "/admin/users",
+};
 
+function SidebarNav({
+  items,
+  currentPath,
+  onNavigate,
+  onLinkClick,
+}: {
+  items: NavItem[];
+  currentPath: string;
+  onNavigate: (path: string) => void;
+  onLinkClick?: () => void;
+}) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 py-4">
-        <Link to={ROUTES.HOME} className="text-lg font-semibold text-primary">
-          Compass
-        </Link>
-      </div>
-      <Separator />
-      <div className="flex-1 overflow-y-auto py-4 px-1">
-        {renderSection("Student", STUDENT_NAV)}
-        {renderSection("Lecturer", LECTURER_NAV)}
-        {renderSection("AI Modules", AI_NAV)}
-        {renderSection("Admin", ADMIN_NAV)}
-      </div>
-    </div>
+    <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Main navigation">
+      {items.map((item) => {
+        const isActive = currentPath === item.path;
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.path}
+            type="button"
+            onClick={() => {
+              onNavigate(item.path);
+              onLinkClick?.();
+            }}
+            aria-label={`Navigate to ${item.label}`}
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "hover:bg-accent hover:text-accent-foreground",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isActive
+                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
+                : "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-4 shrink-0" />
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
-  const [sheetOpen, setSheetOpen] = useState(false);
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) return null;
+
+  const initials = user.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  function handleLogout() {
+    logout();
+    navigate("/");
+  }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-muted/30">
-        <SidebarContent />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="ml-1 gap-2" aria-label="User menu">
+          <Avatar className="size-7">
+            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="hidden max-w-[120px] truncate text-sm sm:inline">{user.name}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>
+          <p className="text-sm font-medium">{user.name}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => navigate(PROFILE_ROUTE[user.role])}
+          aria-label="Go to profile"
+        >
+          <User className="size-4" />
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleLogout}
+          variant="destructive"
+          aria-label="Sign out"
+        >
+          <LogOut className="size-4" />
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export default function AppShell() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  if (!user) return null;
+
+  const navItems = NAV_BY_ROLE[user.role] || [];
+
+  const initials = user.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-4 py-5">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Navigation className="size-4" />
+        </div>
+        <span className="text-lg font-bold tracking-tight">Compass</span>
+      </div>
+
+      <Separator />
+
+      <ScrollArea className="flex-1 py-4 custom-scrollbar">
+        <SidebarNav
+          items={navItems}
+          currentPath={location.pathname}
+          onNavigate={navigate}
+          onLinkClick={() => setMobileOpen(false)}
+        />
+      </ScrollArea>
+
+      <Separator />
+
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="size-8">
+            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{user.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{user.role}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      <aside className="hidden md:flex w-64 flex-col border-r bg-card">
+        {sidebarContent}
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-40">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu trigger */}
-            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <SidebarContent onNavigate={() => setSheetOpen(false)} />
-              </SheetContent>
-            </Sheet>
-            <span className="text-sm font-medium text-foreground lg:hidden">
-              Compass
-            </span>
-          </div>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation Menu</SheetTitle>
+          </SheetHeader>
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    ST
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <div className="flex items-center gap-2 p-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    ST
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Student</span>
-                  <span className="text-xs text-muted-foreground">
-                    student@yibs.cm
-                  </span>
-                </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex h-14 items-center gap-2 border-b bg-card px-4 md:px-6" role="banner">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation menu"
+          >
+            <Menu className="size-5" />
+          </Button>
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <UserMenu />
+          </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8" role="main">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
