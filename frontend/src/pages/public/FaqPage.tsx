@@ -7,6 +7,25 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useNavigate } from 'react-router-dom';
+import PageHeroCarousel from '@/components/public/PageHeroCarousel';
+
+const HERO_SLIDES = [
+  {
+    image: '/carousel_3.png',
+    title: 'Frequently Asked Questions',
+    subtitle: 'Find answers to common questions about Compass and how it can help you succeed academically.',
+  },
+  {
+    image: '/carousel_1.png',
+    title: 'Got Questions? We Have Answers',
+    subtitle: 'From data privacy to AI accuracy — everything you need to know before getting started.',
+  },
+  {
+    image: '/carousel_2.png',
+    title: 'Your Academic Success, Explained',
+    subtitle: 'Compass is free for all students. Learn how our five AI modules work together to support your journey.',
+  },
+];
 
 const FAQ_ITEMS = [
   {
@@ -56,21 +75,8 @@ export function FAQPage() {
 
   return (
     <div className="min-h-[60vh]">
-      {/* Hero */}
-      <section className="py-16 md:py-24 text-center px-4">
-        <div className="mx-auto max-w-3xl">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/10">
-            <HelpCircle className="h-7 w-7 text-secondary" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Frequently Asked Questions
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Find answers to common questions about Compass and how it can help
-            you succeed academically.
-          </p>
-        </div>
-      </section>
+      {/* Hero Carousel */}
+      <PageHeroCarousel slides={HERO_SLIDES} />
 
       {/* FAQ Accordion */}
       <section className="mx-auto max-w-3xl px-4 pb-16">

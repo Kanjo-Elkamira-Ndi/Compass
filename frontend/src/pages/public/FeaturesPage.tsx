@@ -12,7 +12,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import PageHeroCarousel from '@/components/public/PageHeroCarousel';
 import type { LucideIcon } from 'lucide-react';
+
+const HERO_SLIDES = [
+  {
+    image: '/carousel_1.png',
+    title: 'Powered by AI, Designed for Students',
+    subtitle: 'Five specialized modules that work together to give you a complete academic toolkit — from day-to-day questions to long-term career planning.',
+  },
+  {
+    image: '/carousel_2.png',
+    title: 'Smart Analytics, Real Results',
+    subtitle: 'Risk assessment with 87% accuracy, trend analysis that catches issues early, and personalised insights that actually move the needle.',
+  },
+  {
+    image: '/carousel_3.png',
+    title: 'Your Academic Journey, Reimagined',
+    subtitle: 'From AI chat to career guidance — every tool a student needs, powered by the latest in retrieval-augmented generation.',
+  },
+];
 
 /* ─── Feature detail data ─── */
 interface FeatureDetail {
@@ -149,28 +168,8 @@ export function FeaturesPage() {
 
   return (
     <div>
-      {/* ─── Hero ─── */}
-      <section className="hero-gradient relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-white/5 blur-2xl" />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="mx-auto max-w-3xl text-center"
-          >
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-              Powered by AI,
-              <br />
-              Designed for Students
-            </h1>
-            <p className="mt-6 text-lg text-white/80 sm:text-xl leading-relaxed">
-              Five specialized modules that work together to give you a complete academic
-              toolkit — from day-to-day questions to long-term career planning.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      {/* ─── Hero Carousel ─── */}
+      <PageHeroCarousel slides={HERO_SLIDES} />
 
       {/* ─── Feature Sections ─── */}
       <section className="py-20 sm:py-28">

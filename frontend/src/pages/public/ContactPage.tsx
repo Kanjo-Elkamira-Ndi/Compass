@@ -17,7 +17,26 @@ import {
 } from '@/components/ui/select';
 import { submitContactForm } from '@/api/client';
 import { toast } from 'sonner';
+import PageHeroCarousel from '@/components/public/PageHeroCarousel';
 import type { ContactFormData } from '@/types';
+
+const HERO_SLIDES = [
+  {
+    image: '/carousel_1.png',
+    title: 'Get in Touch',
+    subtitle: 'Have a question about Compass? Want to learn more about partnerships? We\'d love to hear from you.',
+  },
+  {
+    image: '/carousel_3.png',
+    title: 'Let\'s Build the Future Together',
+    subtitle: 'Whether you\'re a student, lecturer, or institution — we\'re here to help you succeed.',
+  },
+  {
+    image: '/carousel_2.png',
+    title: 'Partnership Opportunities',
+    subtitle: 'Interested in bringing Compass to your institution? We offer flexible partnership models for universities worldwide.',
+  },
+];
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -97,19 +116,8 @@ export function ContactPage() {
   return (
     <div className="min-h-[60vh] py-16 md:py-24 px-4">
       <div className="mx-auto max-w-6xl">
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/10">
-            <Mail className="h-7 w-7 text-secondary" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Get in Touch
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have a question about Compass? Want to learn more about partnerships?
-            We&apos;d love to hear from you.
-          </p>
-        </div>
+        {/* Hero Carousel */}
+        <PageHeroCarousel slides={HERO_SLIDES} />
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Contact Form */}

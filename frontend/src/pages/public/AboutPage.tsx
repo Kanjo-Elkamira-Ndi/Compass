@@ -11,7 +11,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
+import PageHeroCarousel from '@/components/public/PageHeroCarousel';
 import type { LucideIcon } from 'lucide-react';
+
+const HERO_SLIDES = [
+  {
+    image: '/carousel_2.png',
+    title: 'Empowering Students with AI-Driven Guidance',
+    subtitle: 'No student should navigate university alone. We built Compass to democratise academic support for every learner.',
+  },
+  {
+    image: '/carousel_1.png',
+    title: 'Built from Real Student Struggles',
+    subtitle: 'From a pilot with 200 students to a platform serving 1,200+ — Compass grew from a simple idea: every student deserves a personal advisor.',
+  },
+  {
+    image: '/carousel_3.png',
+    title: 'A Team That Cares',
+    subtitle: 'Academic advisors, engineers, researchers, and designers — united by one mission: making student success accessible to all.',
+  },
+];
 
 /* ─── Values ─── */
 const VALUES: { icon: LucideIcon; title: string; description: string }[] = [
@@ -94,26 +113,8 @@ export function AboutPage() {
 
   return (
     <div>
-      {/* ─── Hero ─── */}
-      <section className="hero-gradient relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-white/5 blur-2xl" />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="mx-auto max-w-3xl text-center"
-          >
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-              About Compass
-            </h1>
-            <p className="mt-6 text-lg text-white/80 sm:text-xl leading-relaxed">
-              Empowering students with AI-driven academic guidance — because no student
-              should navigate university alone.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      {/* ─── Hero Carousel ─── */}
+      <PageHeroCarousel slides={HERO_SLIDES} />
 
       {/* ─── Our Mission ─── */}
       <section className="py-20 sm:py-28">
