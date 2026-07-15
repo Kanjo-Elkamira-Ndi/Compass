@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import PageHeroCarousel from '@/components/public/PageHeroCarousel';
+import StorySection from '@/components/public/StorySection';
 import type { LucideIcon } from 'lucide-react';
 
 const HERO_SLIDES = [
@@ -144,91 +145,7 @@ export function AboutPage() {
       </section>
 
       {/* ─── The Story ─── */}
-      <section className="bg-muted/30 py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-            {/* Left — Story text */}
-            <FadeUp>
-              <div className="space-y-6">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider text-primary">
-                    Our Story
-                  </p>
-                  <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                    How Compass came to be
-                  </h2>
-                </div>
-                <div className="space-y-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
-                  <p>
-                    In 2023, Dr. Engr. Kimbi Eric Jam had spent years moving through some of
-                    Cameroon&apos;s higher institutes of learning — as Head of Department, Dean of
-                    Studies, and academic researcher at institutions including CITEC HITM, Siantou
-                    University Institute, Yaoundé International Business School (YIBS), and Anglia
-                    University, among others. Across every campus, the same pattern followed him.
-                  </p>
-                  <p>
-                    Students would show up at his office in the final weeks before a semester closed,
-                    only to discover they&apos;d missed a prerequisite, misjudged a credit
-                    requirement, or drifted quietly into academic risk without anyone catching it
-                    in time. The information they needed had always existed — in the handbook, the
-                    course catalog, the departmental circulars — but getting it to the right
-                    student at the right moment was the part that kept failing.
-                  </p>
-                  <blockquote className="border-l-4 border-primary pl-4 italic">
-                    &ldquo;I could sit with maybe forty or fifty students a week, across advising
-                    sessions and office hours. But a single institution could carry a few thousand
-                    enrolled students at a time. Most of what they needed to know, I already had
-                    answers for. The bottleneck was never the knowledge — it was reach.&rdquo;
-                  </blockquote>
-                  <p>
-                    That observation became the seed of Compass. Working alongside a small team
-                    of software engineers familiar with Cameroon&apos;s higher-education landscape,
-                    he helped shape the first version: a chatbot grounded in a
-                    university&apos;s own documents — its handbook, its course catalog, its
-                    academic regulations — so students could get a reliable answer at any hour,
-                    not just during scheduled advising windows.
-                  </p>
-                  <p>
-                    The early pilot, run with a few hundred students at a partner institution,
-                    made the case on its own. Students messaged the chatbot at odd hours — late at
-                    night before an exam, in the anxious days before registration closed — and got
-                    grounded answers instead of guesswork. When the risk-assessment module was
-                    added in the platform&apos;s second phase, it flagged over a dozen students
-                    showing early signs of academic difficulty well before midterms — students
-                    who, in years past, might not have been noticed until it was too late to
-                    change course.
-                  </p>
-                  <p>
-                    Today, Compass has grown into a five-module platform — chatbot, risk
-                    prediction, research assistant, exam generation, and career guidance —
-                    serving over 1,200 active students across multiple faculties, with plans to
-                    expand to additional institutions across Cameroon and, eventually, the wider
-                    region.
-                  </p>
-                </div>
-              </div>
-            </FadeUp>
-
-            {/* Right — Image */}
-            <FadeUp delay={0.15}>
-              <div className="relative">
-                <div className="overflow-hidden rounded-2xl border border-border/60 shadow-xl">
-                  <img
-                    src="/carousel_2.png"
-                    alt="Students and faculty in a Cameroonian university setting"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                {/* Floating stat badge */}
-                <div className="absolute -bottom-5 -left-5 hidden rounded-xl border bg-background p-4 shadow-lg sm:block">
-                  <p className="text-2xl font-bold text-primary">1,200+</p>
-                  <p className="text-xs text-muted-foreground">active students</p>
-                </div>
-              </div>
-            </FadeUp>
-          </div>
-        </div>
-      </section>
+      <StorySection />
 
       {/* ─── The Team ─── */}
       <section className="py-20 sm:py-28">
