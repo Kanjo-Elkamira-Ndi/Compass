@@ -145,45 +145,88 @@ export function AboutPage() {
 
       {/* ─── The Story ─── */}
       <section className="bg-muted/30 py-20 sm:py-28">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <FadeUp>
-            <div className="space-y-6">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">The Story</h2>
-              <div className="space-y-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
-                <p>
-                  In 2022, Dr. Priya Naidoo was a senior academic advisor at a large public
-                  university. Each semester, she saw the same pattern: students would come to
-                  her office weeks before graduation, only to discover they were missing
-                  credits, had taken the wrong electives, or were at risk of not meeting their
-                  degree requirements.
-                </p>
-                <p>
-                  &ldquo;I could only see 30 students a week,&rdquo; Priya recalls.
-                  &ldquo;But there were 12,000 enrolled students. I knew the answers to 80%
-                  of their questions — they were in the handbook, in the course catalog, in
-                  the policy documents. The problem was access.&rdquo;
-                </p>
-                <p>
-                  She teamed up with Marcus Chen, a machine learning engineer who had been
-                  exploring RAG (Retrieval-Augmented Generation) systems for educational
-                  content. Together, they prototyped the first version of Compass — a simple
-                  chatbot that could answer academic questions using the university&apos;s own
-                  documents as its knowledge base.
-                </p>
-                <p>
-                  The pilot with 200 students was transformative. Students got instant answers
-                  at 2&nbsp;AM when anxiety peaked. The risk assessment module, added in the
-                  second iteration, caught 34 at-risk students before midterms — students who
-                  would otherwise have discovered their standing too late.
-                </p>
-                <p>
-                  Today, Compass has grown into a five-module platform serving over 1,200
-                  active students across multiple faculties, with plans to expand
-                  university-wide and eventually to partner institutions.
-                </p>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Left — Story text */}
+            <FadeUp>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                    Our Story
+                  </p>
+                  <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                    How Compass came to be
+                  </h2>
+                </div>
+                <div className="space-y-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
+                  <p>
+                    In 2023, Dr. Engr. Kimbi Eric Jam had spent years moving through some of
+                    Cameroon&apos;s higher institutes of learning — as Head of Department, Dean of
+                    Studies, and academic researcher at institutions including CITEC HITM, Siantou
+                    University Institute, Yaoundé International Business School (YIBS), and Anglia
+                    University, among others. Across every campus, the same pattern followed him.
+                  </p>
+                  <p>
+                    Students would show up at his office in the final weeks before a semester closed,
+                    only to discover they&apos;d missed a prerequisite, misjudged a credit
+                    requirement, or drifted quietly into academic risk without anyone catching it
+                    in time. The information they needed had always existed — in the handbook, the
+                    course catalog, the departmental circulars — but getting it to the right
+                    student at the right moment was the part that kept failing.
+                  </p>
+                  <blockquote className="border-l-4 border-primary pl-4 italic">
+                    &ldquo;I could sit with maybe forty or fifty students a week, across advising
+                    sessions and office hours. But a single institution could carry a few thousand
+                    enrolled students at a time. Most of what they needed to know, I already had
+                    answers for. The bottleneck was never the knowledge — it was reach.&rdquo;
+                  </blockquote>
+                  <p>
+                    That observation became the seed of Compass. Working alongside a small team
+                    of software engineers familiar with Cameroon&apos;s higher-education landscape,
+                    he helped shape the first version: a chatbot grounded in a
+                    university&apos;s own documents — its handbook, its course catalog, its
+                    academic regulations — so students could get a reliable answer at any hour,
+                    not just during scheduled advising windows.
+                  </p>
+                  <p>
+                    The early pilot, run with a few hundred students at a partner institution,
+                    made the case on its own. Students messaged the chatbot at odd hours — late at
+                    night before an exam, in the anxious days before registration closed — and got
+                    grounded answers instead of guesswork. When the risk-assessment module was
+                    added in the platform&apos;s second phase, it flagged over a dozen students
+                    showing early signs of academic difficulty well before midterms — students
+                    who, in years past, might not have been noticed until it was too late to
+                    change course.
+                  </p>
+                  <p>
+                    Today, Compass has grown into a five-module platform — chatbot, risk
+                    prediction, research assistant, exam generation, and career guidance —
+                    serving over 1,200 active students across multiple faculties, with plans to
+                    expand to additional institutions across Cameroon and, eventually, the wider
+                    region.
+                  </p>
+                </div>
               </div>
-            </div>
-          </FadeUp>
+            </FadeUp>
+
+            {/* Right — Image */}
+            <FadeUp delay={0.15}>
+              <div className="relative">
+                <div className="overflow-hidden rounded-2xl border border-border/60 shadow-xl">
+                  <img
+                    src="/carousel_2.png"
+                    alt="Students and faculty in a Cameroonian university setting"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                {/* Floating stat badge */}
+                <div className="absolute -bottom-5 -left-5 hidden rounded-xl border bg-background p-4 shadow-lg sm:block">
+                  <p className="text-2xl font-bold text-primary">1,200+</p>
+                  <p className="text-xs text-muted-foreground">active students</p>
+                </div>
+              </div>
+            </FadeUp>
+          </div>
         </div>
       </section>
 
