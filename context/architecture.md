@@ -17,7 +17,7 @@ Five Docker containers on an internal bridge network:
 | Container | Technology | Port | Responsibility |
 |---|---|---|---|
 | `react-app` | React 18 + shadcn/ui + Tailwind CSS, Nginx 1.25 | 80/443 | Serves the SPA (both the authenticated app **and** the public marketing site, see below); proxies `/api/*` to `spring-api` |
-| `spring-api` | Java 21 + Spring Boot 3 | 8080 | All REST endpoints, JWT filter chain, service layer, Spring AI integration |
+| `spring-api` | Java 17 + Spring Boot 3 | 8080 | All REST endpoints, JWT filter chain, service layer, Spring AI integration |
 | `postgres-db` | PostgreSQL 16 + pgvector | 5432 | Persists all domain data and vector embeddings; schema versioned by Flyway |
 | `redis-cache` | Redis 7 | 6379 | Revoked-refresh-token TTL cache, AI response cache, public-stats cache |
 | `nginx-proxy` | Nginx reverse proxy | 80/443 | TLS termination; routes `/` → `react-app`, `/api` → `spring-api`; handles CORS |

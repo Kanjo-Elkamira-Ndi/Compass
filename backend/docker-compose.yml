@@ -1,0 +1,31 @@
+services:
+  postgres-db:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: advisor
+      POSTGRES_USER: ${DB_USER:-advisor}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-advisor_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-advisor} -d advisor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
