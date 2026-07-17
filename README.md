@@ -58,7 +58,7 @@ Full module and actor breakdown: [`context/project-overview.md`](./context/proje
 | Layer | Choice |
 |---|---|
 | Frontend | React 18, shadcn/ui + Tailwind CSS, Axios, React Router 6 |
-| Backend | Java 21, Spring Boot 3, Spring Security, Spring AI |
+| Backend | Java 17, Spring Boot 3, Spring Security, Spring AI |
 | Database | PostgreSQL 16 + pgvector |
 | AI providers | OpenAI (primary), Gemini (fallback), Hugging Face (specialised NLP) |
 | Cache | Redis 7 |

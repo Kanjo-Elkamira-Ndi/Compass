@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: compass-advisor
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/advisor}
+    username: ${DB_USER:advisor}
+    password: ${DB_PASSWORD:advisor_dev}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+
+  ai:
+    active-provider: ${AI_PROVIDER:openai}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-in-production-minimum-256-bits-required-for-hs256-algorithm}
+    access-token-expiration-ms: 900000   # 15 minutes
+    refresh-token-expiration-days: 7
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
