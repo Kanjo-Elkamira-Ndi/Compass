@@ -116,6 +116,13 @@
             <version>1.6.3</version>
         </dependency>
 
+        <!-- Hibernate Types (JSONB support) -->
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-63</artifactId>
+            <version>3.9.11</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
