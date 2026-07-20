@@ -31,7 +31,7 @@ public abstract class User {
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, insertable = false, updatable = false)
     private Role role;
 
     @Enumerated(EnumType.STRING)

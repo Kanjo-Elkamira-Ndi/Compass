@@ -28,10 +28,10 @@ spring:
 
   data:
     redis:
-      url: ${REDIS_URL:redis://localhost:6379}
+      url: redis://localhost:6379
 
   ai:
-    active-provider: ${AI_PROVIDER:openai}
+    active-provider: openai
 
 management:
   endpoints:
@@ -44,11 +44,11 @@ management:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: dev-only-change-in-production-minimum-256-bits-required-for-hs256-algorithm
     access-token-expiration-ms: 900000
     refresh-token-expiration-days: 7
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:}
+      api-key:
     gemini:
-      api-key: ${GEMINI_API_KEY:}
+      api-key:
