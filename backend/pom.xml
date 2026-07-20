@@ -123,6 +123,13 @@
             <version>3.9.11</version>
         </dependency>
 
+        <!-- Dotenv (.env file support) -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
