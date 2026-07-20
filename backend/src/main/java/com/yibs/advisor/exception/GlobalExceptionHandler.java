@@ -74,6 +74,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Access denied", "ACCESS_DENIED"));
     }
 
+    @ExceptionHandler(AlreadyEnrolledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage(), "ALREADY_ENROLLED"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);
