@@ -74,6 +74,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Access denied", "ACCESS_DENIED"));
     }
 
+    @ExceptionHandler(InsufficientDataException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientData(InsufficientDataException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ex.getMessage(), "INSUFFICIENT_DATA"));
+    }
+
     @ExceptionHandler(AlreadyEnrolledException.class)
     public ResponseEntity<ApiResponse<Void>> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
