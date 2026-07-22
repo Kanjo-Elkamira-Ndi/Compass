@@ -86,6 +86,21 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage(), "ALREADY_ENROLLED"));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        String message = ex.getMessage();
+        if (message != null && message.contains("PDF")) {
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                    .body(ApiResponse.error(message, "UNSUPPORTED_MEDIA_TYPE"));
+        }
+        if (message != null && message.contains("20MB")) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body(ApiResponse.error(message, "FILE_TOO_LARGE"));
+        }
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(message, "BAD_REQUEST"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);
