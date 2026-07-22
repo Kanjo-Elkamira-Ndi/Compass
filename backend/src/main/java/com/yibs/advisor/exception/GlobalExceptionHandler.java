@@ -74,10 +74,31 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Access denied", "ACCESS_DENIED"));
     }
 
+    @ExceptionHandler(InsufficientDataException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientData(InsufficientDataException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ex.getMessage(), "INSUFFICIENT_DATA"));
+    }
+
     @ExceptionHandler(AlreadyEnrolledException.class)
     public ResponseEntity<ApiResponse<Void>> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage(), "ALREADY_ENROLLED"));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        String message = ex.getMessage();
+        if (message != null && message.contains("PDF")) {
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                    .body(ApiResponse.error(message, "UNSUPPORTED_MEDIA_TYPE"));
+        }
+        if (message != null && message.contains("20MB")) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body(ApiResponse.error(message, "FILE_TOO_LARGE"));
+        }
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(message, "BAD_REQUEST"));
     }
 
     @ExceptionHandler(Exception.class)

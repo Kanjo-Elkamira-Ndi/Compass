@@ -32,3 +32,4 @@ logs/
 
 # Docker volumes (local data)
 postgres_data/
+backend/src/main/resources/application.yml
