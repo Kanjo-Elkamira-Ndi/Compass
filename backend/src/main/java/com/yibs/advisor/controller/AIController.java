@@ -4,12 +4,14 @@ import com.yibs.advisor.dto.request.ChatRequest;
 import com.yibs.advisor.dto.request.ExamRequest;
 import com.yibs.advisor.dto.request.SaveExamRequest;
 import com.yibs.advisor.dto.response.ApiResponse;
+import com.yibs.advisor.dto.response.CareerRecommendationResponse;
 import com.yibs.advisor.dto.response.ChatHistoryResponse;
 import com.yibs.advisor.dto.response.ChatResponse;
 import com.yibs.advisor.dto.response.ExamQuestionResponse;
 import com.yibs.advisor.dto.response.ExamResponse;
 import com.yibs.advisor.dto.response.ResearchAnalysisResponse;
 import com.yibs.advisor.dto.response.RiskAssessmentResponse;
+import com.yibs.advisor.service.ai.CareerRecommendationService;
 import com.yibs.advisor.service.ai.ExamGeneratorService;
 import com.yibs.advisor.service.ai.ResearchAssistantService;
 import com.yibs.advisor.service.ai.RiskAssessmentService;
@@ -38,6 +40,7 @@ public class AIController {
     private final RiskAssessmentService riskAssessmentService;
     private final ResearchAssistantService researchAssistantService;
     private final ExamGeneratorService examGeneratorService;
+    private final CareerRecommendationService careerRecommendationService;
 
     // ─── Chat ───────────────────────────────────────────────
     @PostMapping("/chat")
@@ -123,5 +126,14 @@ public class AIController {
         ExamResponse exam = examGeneratorService.saveExam(request, lecturerId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Exam saved successfully", exam));
+    }
+
+    // ─── Career Recommendation ──────────────────────────────
+    @GetMapping("/career-recommendations")
+    public ResponseEntity<ApiResponse<List<CareerRecommendationResponse>>> getCareerRecommendations(
+            Authentication authentication) {
+        UUID studentId = UUID.fromString(authentication.getName());
+        List<CareerRecommendationResponse> recommendations = careerRecommendationService.getRecommendations(studentId);
+        return ResponseEntity.ok(ApiResponse.ok(recommendations));
     }
 }
