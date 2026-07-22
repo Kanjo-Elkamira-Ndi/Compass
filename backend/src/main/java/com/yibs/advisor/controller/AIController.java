@@ -1,11 +1,16 @@
 package com.yibs.advisor.controller;
 
 import com.yibs.advisor.dto.request.ChatRequest;
+import com.yibs.advisor.dto.request.ExamRequest;
+import com.yibs.advisor.dto.request.SaveExamRequest;
 import com.yibs.advisor.dto.response.ApiResponse;
 import com.yibs.advisor.dto.response.ChatHistoryResponse;
 import com.yibs.advisor.dto.response.ChatResponse;
+import com.yibs.advisor.dto.response.ExamQuestionResponse;
+import com.yibs.advisor.dto.response.ExamResponse;
 import com.yibs.advisor.dto.response.ResearchAnalysisResponse;
 import com.yibs.advisor.dto.response.RiskAssessmentResponse;
+import com.yibs.advisor.service.ai.ExamGeneratorService;
 import com.yibs.advisor.service.ai.ResearchAssistantService;
 import com.yibs.advisor.service.ai.RiskAssessmentService;
 import com.yibs.advisor.service.ai.rag.ChatbotService;
@@ -32,6 +37,7 @@ public class AIController {
     private final RagIngestionService ragIngestionService;
     private final RiskAssessmentService riskAssessmentService;
     private final ResearchAssistantService researchAssistantService;
+    private final ExamGeneratorService examGeneratorService;
 
     // ─── Chat ───────────────────────────────────────────────
     @PostMapping("/chat")
@@ -95,5 +101,27 @@ public class AIController {
         UUID userId = UUID.fromString(authentication.getName());
         List<ResearchAnalysisResponse> history = researchAssistantService.getHistory(userId);
         return ResponseEntity.ok(ApiResponse.ok(history));
+    }
+
+    // ─── Exam Generator ─────────────────────────────────────
+    @PostMapping("/exam-generator")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ResponseEntity<ApiResponse<List<ExamQuestionResponse>>> generateExam(
+            @Valid @RequestBody ExamRequest request,
+            Authentication authentication) {
+        UUID lecturerId = UUID.fromString(authentication.getName());
+        List<ExamQuestionResponse> questions = examGeneratorService.generate(request, lecturerId);
+        return ResponseEntity.ok(ApiResponse.ok(questions));
+    }
+
+    @PostMapping("/exams")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ResponseEntity<ApiResponse<ExamResponse>> saveExam(
+            @Valid @RequestBody SaveExamRequest request,
+            Authentication authentication) {
+        UUID lecturerId = UUID.fromString(authentication.getName());
+        ExamResponse exam = examGeneratorService.saveExam(request, lecturerId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("Exam saved successfully", exam));
     }
 }
