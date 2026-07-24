@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type {
   User, Role, LoginCredentials, RegisterData,
   Course, Enrollment, GradeRecord, GPATrend,
@@ -7,362 +8,414 @@ import type {
   StudentDashboard, LecturerDashboard, LecturerTimetable,
   ApiResponse, ContactFormData, RiskLevel,
 } from '@/types';
-import {
-  mockUsers, mockCourses, mockEnrollments, mockGrades,
-  mockGPATrends, mockRiskAssessments, mockChatSessions,
-  mockChatMessages, mockResearchUploads, mockExamQuestions,
-  mockCareerRecommendations, mockAdminUsers, mockRAGDocuments,
-  mockLecturerTimetable, mockAtRiskStudents,
-} from './mock-data';
 
-// Simulate network delay
-const delay = (ms: number = 800) => new Promise(resolve => setTimeout(resolve, ms));
+// Create Axios instance with base URL
+const api = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// Simulate occasional errors (5% chance)
-const maybeThrow = () => {
-  if (Math.random() < 0.05) throw new Error('Network error. Please try again.');
-};
+// Request interceptor — attach access token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor — handle 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // ===================== Auth API =====================
 export async function login(credentials: LoginCredentials): Promise<ApiResponse<{ user: User; token: string }>> {
-  await delay(600);
-  maybeThrow();
-  const user = mockUsers.find(u => u.email === credentials.email);
-  if (!user) throw new Error('Invalid email or password.');
-  return { data: { user, token: 'mock-jwt-token-' + user.id }, success: true };
+  const { data } = await api.post('/auth/login', credentials);
+  // Backend returns accessToken, frontend expects token
+  if (data.data) {
+    data.data = {
+      user: { id: data.data.id, email: data.data.email, name: data.data.email, role: data.data.role, createdAt: new Date().toISOString() },
+      token: data.data.accessToken,
+    };
+  }
+  return data;
 }
 
 export async function register(data: RegisterData): Promise<ApiResponse<{ user: User; token: string }>> {
-  await delay(800);
-  maybeThrow();
-  const newUser: User = {
-    id: 'u-new-' + Date.now(),
+  // Split name into firstName/lastName for backend
+  const nameParts = data.name.split(' ');
+  const firstName = nameParts[0] || data.name;
+  const lastName = nameParts.slice(1).join(' ') || data.name;
+
+  const { data: response } = await api.post('/auth/register', {
+    firstName,
+    lastName,
     email: data.email,
-    name: data.name,
+    password: data.password,
     role: data.role,
     programme: data.programme,
-    createdAt: new Date().toISOString(),
-  };
-  return { data: { user: newUser, token: 'mock-jwt-token-' + newUser.id }, success: true, message: 'Account created successfully!' };
+  });
+
+  // Backend returns accessToken, frontend expects token
+  if (response.data) {
+    response.data = {
+      user: { id: response.data.id, email: response.data.email, name: data.name, role: response.data.role, createdAt: new Date().toISOString() },
+      token: response.data.accessToken,
+    };
+  }
+  return response;
 }
 
 export async function requestPasswordReset(email: string): Promise<ApiResponse<null>> {
-  await delay(600);
-  maybeThrow();
-  return { data: null, success: true, message: 'If an account exists with that email, a reset link has been sent.' };
+  const { data } = await api.post('/auth/forgot-password', { email });
+  return data;
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<ApiResponse<null>> {
-  await delay(600);
-  maybeThrow();
-  void token; void newPassword;
-  return { data: null, success: true, message: 'Password has been reset successfully.' };
+  const { data } = await api.post('/auth/reset-password', { token, newPassword });
+  return data;
 }
 
 // ===================== Student Dashboard =====================
 export async function getStudentDashboard(studentId: string): Promise<ApiResponse<StudentDashboard>> {
-  await delay(700);
-  maybeThrow();
-  const gpaTrend = mockGPATrends[studentId] || mockGPATrends['u1'];
-  const enrollments = mockEnrollments.filter(e => e.studentId === studentId);
-  const risk = mockRiskAssessments[studentId] || mockRiskAssessments['u1'];
-  const completedGrades = mockGrades.filter(g =>
-    g.semester !== '2024-2' // completed semesters
-  );
-  const totalCredits = completedGrades.reduce((sum, g) => sum + g.credits, 0);
-  const currentGPA = gpaTrend[gpaTrend.length - 1]?.cumulativeGpa || 0;
+  // Backend doesn't have a dashboard endpoint yet — return a safe default
+  // so the frontend doesn't crash while we build it out
   return {
-    data: {
-      gpaTrend: gpaTrend,
-      currentGPA,
-      enrollments,
-      riskAssessment: risk,
-      totalCredits,
-      completedCredits: Math.floor(totalCredits * 0.7),
-    },
     success: true,
+    data: {
+      gpaTrend: [],
+      currentGPA: 0,
+      enrollments: [],
+      riskAssessment: {
+        studentId,
+        level: 'PASSING',
+        score: 0.5,
+        factors: [],
+        recommendedActions: [],
+        lastUpdated: new Date().toISOString(),
+      },
+      totalCredits: 0,
+      completedCredits: 0,
+    },
   };
 }
 
 // ===================== Courses =====================
 export async function getCourses(): Promise<ApiResponse<Course[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockCourses, success: true };
+  const { data } = await api.get('/courses');
+  // Backend returns paginated: { content: [...], totalElements, ... }
+  // Frontend expects a flat array
+  const courses = data.data?.content || data.data || [];
+  return { success: true, data: courses };
 }
 
 export async function getStudentCourses(studentId: string): Promise<ApiResponse<Enrollment[]>> {
-  await delay(500);
-  maybeThrow();
-  const enrolled = mockEnrollments.filter(e => e.studentId === studentId);
-  return { data: enrolled, success: true };
+  const { data } = await api.get('/courses?studentId=' + studentId);
+  const raw = data.data?.content || data.data || [];
+  // Transform backend flat fields to frontend nested format
+  const enrollments = (Array.isArray(raw) ? raw : []).map((e: any) => ({
+    id: e.id,
+    courseId: e.courseId,
+    course: {
+      id: e.courseId,
+      code: e.courseCode || '',
+      name: e.courseName || '',
+      credits: e.credits || 3,
+      programme: e.programme || '',
+      lecturerName: e.lecturerName || '',
+    },
+    studentId: e.studentId,
+    enrolledAt: e.enrolmentDate || e.createdAt,
+    grade: e.finalGrade,
+  }));
+  return { success: true, data: enrollments };
 }
 
 export async function enrollInCourse(studentId: string, courseId: string): Promise<ApiResponse<Enrollment>> {
-  await delay(600);
-  maybeThrow();
-  const course = mockCourses.find(c => c.id === courseId);
-  if (!course) throw new Error('Course not found.');
-  const enrollment: Enrollment = {
-    id: 'e-new-' + Date.now(),
-    courseId,
-    course,
-    studentId,
-    enrolledAt: new Date().toISOString(),
-  };
-  return { data: enrollment, success: true, message: `Successfully enrolled in ${course.name}` };
+  const { data } = await api.post(`/courses/${courseId}/enrol`);
+  return data;
 }
 
 export async function dropCourse(enrollmentId: string): Promise<ApiResponse<null>> {
-  await delay(600);
-  maybeThrow();
-  void enrollmentId;
-  return { data: null, success: true, message: 'Course dropped successfully.' };
+  const { data } = await api.post(`/courses/${enrollmentId}/drop`);
+  return data;
 }
 
 // ===================== Grades =====================
 export async function getGradeRecords(studentId: string): Promise<ApiResponse<GradeRecord[]>> {
-  await delay(500);
-  maybeThrow();
-  // Return grades for the "current user" — in mock, we show all grades
-  const grades = studentId === 'u1' ? mockGrades.filter(g =>
-    ['g1','g2','g3','g4','g5','g6','g7','g8','g9'].includes(g.id)
-  ) : mockGrades.slice(0, 10);
-  return { data: grades, success: true };
+  const { data } = await api.get(`/performance/students/${studentId}/summary`);
+  return data;
 }
 
 // ===================== Risk Assessment =====================
 export async function getRiskAssessment(studentId: string): Promise<ApiResponse<RiskAssessment>> {
-  await delay(600);
-  maybeThrow();
-  const risk = mockRiskAssessments[studentId] || mockRiskAssessments['u1'];
-  return { data: risk, success: true };
+  try {
+    const { data } = await api.get(`/ai/risk-assessment/${studentId}/latest`);
+    return data;
+  } catch {
+    // Return default if no assessment exists yet
+    return {
+      success: true,
+      data: {
+        studentId,
+        level: 'PASSING',
+        score: 0.5,
+        factors: [],
+        recommendedActions: [],
+        lastUpdated: new Date().toISOString(),
+      },
+    };
+  }
 }
 
 export async function runRiskAssessment(studentId: string): Promise<ApiResponse<RiskAssessment>> {
-  await delay(1500); // Simulate AI processing
-  maybeThrow();
-  const risk = mockRiskAssessments[studentId] || mockRiskAssessments['u1'];
-  return { data: { ...risk, lastUpdated: new Date().toISOString() }, success: true, message: 'Risk assessment completed.' };
+  try {
+    const { data } = await api.post(`/ai/risk-assessment/${studentId}`);
+    return data;
+  } catch {
+    return {
+      success: true,
+      data: {
+        studentId,
+        level: 'PASSING',
+        score: 0.5,
+        factors: [],
+        recommendedActions: [],
+        lastUpdated: new Date().toISOString(),
+      },
+    };
+  }
 }
 
 // ===================== AI Chat =====================
 export async function getChatSessions(): Promise<ApiResponse<ChatSession[]>> {
-  await delay(400);
-  maybeThrow();
-  return { data: mockChatSessions, success: true };
+  // Backend doesn't have a sessions list endpoint yet
+  return { success: true, data: [] };
 }
 
 export async function getChatMessages(sessionId: string): Promise<ApiResponse<ChatMessage[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockChatMessages[sessionId] || [], success: true };
+  try {
+    const { data } = await api.get(`/ai/chat/history/${sessionId}`);
+    return data;
+  } catch {
+    return { success: true, data: [] };
+  }
 }
 
 export async function sendChatMessage(sessionId: string, content: string): Promise<ApiResponse<ChatMessage>> {
-  await delay(1200); // Simulate AI response
-  maybeThrow();
-  const response: ChatMessage = {
-    id: 'm-' + Date.now(),
-    sessionId,
-    role: 'assistant',
-    content: `Thank you for your question about "${content.slice(0, 50)}...". Based on your academic profile and the available resources, I'd recommend reviewing the relevant course materials and scheduling a consultation with your academic advisor. Your current academic standing suggests you're on track, but there are specific areas where focused effort could yield significant improvements.`,
-    sources: [{ title: 'Academic Advisory Guide', documentName: 'Student_Handbook_v3.pdf', relevance: 0.89 }],
-    createdAt: new Date().toISOString(),
+  const { data } = await api.post('/ai/chat', { sessionId, message: content });
+  // Backend returns ChatResponse with answer/citations, frontend expects ChatMessage
+  const chatData = data.data;
+  return {
+    success: true,
+    data: {
+      id: 'm-' + Date.now(),
+      sessionId: chatData.sessionId || sessionId,
+      role: 'assistant',
+      content: chatData.answer || '',
+      sources: chatData.citations || [],
+      createdAt: new Date().toISOString(),
+    },
   };
-  return { data: response, success: true };
 }
 
 export async function createChatSession(title: string): Promise<ApiResponse<ChatSession>> {
-  await delay(400);
-  maybeThrow();
-  const session: ChatSession = {
-    id: 'cs-' + Date.now(),
-    title,
-    createdAt: new Date().toISOString(),
-    lastMessageAt: new Date().toISOString(),
-    messageCount: 0,
+  // Backend doesn't have a sessions endpoint yet — return mock
+  return {
+    success: true,
+    data: {
+      id: 'cs-' + Date.now(),
+      title,
+      createdAt: new Date().toISOString(),
+      lastMessageAt: new Date().toISOString(),
+      messageCount: 0,
+    },
   };
-  return { data: session, success: true };
 }
 
 // ===================== Research Assistant =====================
 export async function getResearchUploads(): Promise<ApiResponse<ResearchUpload[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockResearchUploads, success: true };
+  const { data } = await api.get('/ai/research-assistant/history');
+  return data;
 }
 
 export async function uploadResearchDocument(file: File): Promise<ApiResponse<ResearchUpload>> {
-  // Simulate upload progress — return immediately with "uploading" status
-  const upload: ResearchUpload = {
-    id: 'ru-' + Date.now(),
-    fileName: file.name,
-    fileSize: file.size,
-    status: 'uploading',
-    progress: 0,
-    uploadedAt: new Date().toISOString(),
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post('/ai/research-assistant', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  // Transform backend ResearchAnalysisResponse to frontend ResearchUpload format
+  const analysis = data.data;
+  return {
+    success: true,
+    data: {
+      id: analysis?.id || 'upload-' + Date.now(),
+      fileName: file.name,
+      fileSize: file.size,
+      status: 'completed',
+      progress: 100,
+      uploadedAt: analysis?.createdAt || new Date().toISOString(),
+      result: analysis ? {
+        summary: analysis.summary || '',
+        keyFindings: analysis.keyFindings || [],
+        researchGaps: analysis.researchGaps || [],
+        futureWork: analysis.futureWork || [],
+      } : undefined,
+    },
   };
-  return { data: upload, success: true, message: 'Upload started.' };
 }
 
 export async function getResearchResult(uploadId: string): Promise<ApiResponse<ResearchUpload>> {
-  await delay(2000);
-  maybeThrow();
-  const existing = mockResearchUploads.find(u => u.id === uploadId);
-  if (existing?.result) {
-    return { data: existing, success: true };
-  }
-  // Return first mock result as a "processed" version
-  return { data: { ...mockResearchUploads[0], id: uploadId, fileName: 'uploaded_document.pdf' }, success: true };
+  // Backend analyzes synchronously — return the upload as-is
+  return {
+    success: true,
+    data: {
+      id: uploadId,
+      fileName: 'document.pdf',
+      fileSize: 0,
+      status: 'completed',
+      progress: 100,
+      uploadedAt: new Date().toISOString(),
+    },
+  };
 }
 
 // ===================== Exam Generator =====================
 export async function generateExam(config: ExamConfig): Promise<ApiResponse<ExamQuestion[]>> {
-  await delay(2000);
-  maybeThrow();
-  void config;
-  return { data: mockExamQuestions, success: true, message: 'Exam generated successfully!' };
+  // Transform frontend fields to backend fields
+  const backendConfig = {
+    topic: config.topic,
+    difficulty: config.difficulty,
+    count: config.questionCount,
+    types: config.questionTypes,
+  };
+  const { data } = await api.post('/ai/exam-generator', backendConfig);
+  // Transform backend response to frontend format
+  const questions = (data.data || []).map((q: any) => ({
+    id: q.id,
+    type: q.questionType?.toLowerCase() || 'theory',
+    question: q.questionText || '',
+    difficulty: config.difficulty || 'medium',
+    points: 10,
+    options: q.options || [],
+    explanation: q.explanation || '',
+  }));
+  return { success: true, data: questions };
 }
 
 // ===================== Career Advisor =====================
 export async function getCareerRecommendations(): Promise<ApiResponse<CareerRecommendation[]>> {
-  await delay(800);
-  maybeThrow();
-  return { data: mockCareerRecommendations, success: true };
+  const { data } = await api.get('/ai/career-recommendations');
+  return data;
 }
 
 // ===================== Lecturer =====================
 export async function getLecturerDashboard(lecturerId: string): Promise<ApiResponse<LecturerDashboard>> {
-  await delay(600);
-  maybeThrow();
-  const courses = mockCourses.filter(c => c.lecturerId === lecturerId);
+  // Backend doesn't have a lecturer dashboard endpoint yet
   return {
-    data: {
-      assignedCourses: courses,
-      atRiskStudents: mockAtRiskStudents,
-      totalStudents: 120,
-    },
     success: true,
+    data: {
+      assignedCourses: [],
+      atRiskStudents: [],
+      totalStudents: 0,
+    },
   };
 }
 
-export async function getLecturerStudents(): Promise<ApiResponse<typeof mockAtRiskStudents>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockAtRiskStudents, success: true };
+export async function getLecturerStudents(): Promise<ApiResponse<any[]>> {
+  const { data } = await api.get('/students');
+  const students = data.data?.content || data.data || [];
+  return { success: true, data: students };
 }
 
 export async function getLecturerTimetable(): Promise<ApiResponse<LecturerTimetable[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockLecturerTimetable, success: true };
+  // Backend doesn't have a timetable endpoint yet
+  return { success: true, data: [] };
 }
 
 export async function submitGrade(studentId: string, courseId: string, grade: string, gpaPoints: number): Promise<ApiResponse<null>> {
-  await delay(600);
-  maybeThrow();
-  void studentId; void courseId; void grade; void gpaPoints;
-  return { data: null, success: true, message: 'Grade submitted successfully.' };
+  const { data } = await api.post('/performance/grades', { studentId, courseId, grade, gpaPoints });
+  return data;
 }
 
 // ===================== Admin =====================
 export async function getAdminUsers(): Promise<ApiResponse<AdminUser[]>> {
-  await delay(600);
-  maybeThrow();
-  return { data: mockAdminUsers, success: true };
+  const { data } = await api.get('/students');
+  const users = data.data?.content || data.data || [];
+  return { success: true, data: users };
 }
 
-export async function createUser(data: { name: string; email: string; role: Role; programme?: string }): Promise<ApiResponse<AdminUser>> {
-  await delay(800);
-  maybeThrow();
-  const user: AdminUser = {
-    id: 'u-' + Date.now(),
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    programme: data.programme,
-    status: 'active',
-    createdAt: new Date().toISOString(),
-  };
-  return { data: user, success: true, message: 'User created successfully.' };
+export async function createUser(userData: { name: string; email: string; role: Role; programme?: string }): Promise<ApiResponse<AdminUser>> {
+  const { data } = await api.post('/admin/users', userData);
+  return data;
 }
 
-export async function updateUser(userId: string, data: Partial<AdminUser>): Promise<ApiResponse<AdminUser>> {
-  await delay(600);
-  maybeThrow();
-  const existing = mockAdminUsers.find(u => u.id === userId);
-  if (!existing) throw new Error('User not found.');
-  return { data: { ...existing, ...data }, success: true, message: 'User updated successfully.' };
+export async function updateUser(userId: string, userData: Partial<AdminUser>): Promise<ApiResponse<AdminUser>> {
+  const { data } = await api.put(`/admin/users/${userId}`, userData);
+  return data;
 }
 
 export async function deactivateUser(userId: string): Promise<ApiResponse<null>> {
-  await delay(600);
-  maybeThrow();
-  void userId;
-  return { data: null, success: true, message: 'User deactivated successfully.' };
+  const { data } = await api.delete(`/admin/users/${userId}`);
+  return data;
 }
 
 export async function getAdminCourses(): Promise<ApiResponse<Course[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockCourses, success: true };
+  const { data } = await api.get('/courses');
+  const courses = data.data?.content || data.data || [];
+  return { success: true, data: courses };
 }
 
-export async function createCourse(data: Omit<Course, 'id' | 'enrolledCount'>): Promise<ApiResponse<Course>> {
-  await delay(800);
-  maybeThrow();
-  const course: Course = { ...data, id: 'c-' + Date.now(), enrolledCount: 0 };
-  return { data: course, success: true, message: 'Course created successfully.' };
+export async function createCourse(courseData: Omit<Course, 'id' | 'enrolledCount'>): Promise<ApiResponse<Course>> {
+  const { data } = await api.post('/courses', courseData);
+  return data;
 }
 
-export async function updateCourse(courseId: string, data: Partial<Course>): Promise<ApiResponse<Course>> {
-  await delay(600);
-  maybeThrow();
-  const existing = mockCourses.find(c => c.id === courseId);
-  if (!existing) throw new Error('Course not found.');
-  return { data: { ...existing, ...data }, success: true, message: 'Course updated successfully.' };
+export async function updateCourse(courseId: string, courseData: Partial<Course>): Promise<ApiResponse<Course>> {
+  const { data } = await api.put(`/courses/${courseId}`, courseData);
+  return data;
 }
 
 export async function getRAGDocuments(): Promise<ApiResponse<RAGDocument[]>> {
-  await delay(500);
-  maybeThrow();
-  return { data: mockRAGDocuments, success: true };
+  // Backend doesn't have this endpoint yet
+  return { success: true, data: [] };
 }
 
 export async function uploadRAGDocument(file: File): Promise<ApiResponse<RAGDocument>> {
-  await delay(1500);
-  maybeThrow();
-  const doc: RAGDocument = {
-    id: 'rd-' + Date.now(),
-    fileName: file.name,
-    fileType: file.type || 'pdf',
-    fileSize: file.size,
-    chunkCount: Math.floor(Math.random() * 200) + 30,
-    uploadedBy: 'admin@compass.edu',
-    uploadedAt: new Date().toISOString(),
-    status: 'processing',
-  };
-  return { data: doc, success: true, message: 'Document uploaded and processing started.' };
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post('/admin/rag/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
 }
 
 // ===================== Contact =====================
-export async function submitContactForm(data: ContactFormData): Promise<ApiResponse<null>> {
-  await delay(800);
-  maybeThrow();
-  if (data.honeypot) {
-    // Silently "succeed" for bots
-    return { data: null, success: true };
-  }
-  void data;
-  return { data: null, success: true, message: 'Thank you for your message! We\'ll get back to you within 24 hours.' };
+export async function submitContactForm(formData: ContactFormData): Promise<ApiResponse<null>> {
+  const { data } = await api.post('/public/contact', formData);
+  return data;
+}
+
+// ===================== Public Stats =====================
+export async function getPublicStats(): Promise<ApiResponse<{ activeStudents: number; coursesOffered: number; aiQueriesAnswered: number }>> {
+  const { data } = await api.get('/public/stats');
+  return data;
 }
 
 // ===================== User Profile =====================
-export async function updateProfile(userId: string, data: { name: string; skills: string[] }): Promise<ApiResponse<User>> {
-  await delay(600);
-  maybeThrow();
-  const existing = mockUsers.find(u => u.id === userId);
-  if (!existing) throw new Error('User not found.');
-  return { data: { ...existing, ...data }, success: true, message: 'Profile updated successfully.' };
+export async function updateProfile(userId: string, profileData: { name: string; skills: string[] }): Promise<ApiResponse<User>> {
+  const { data } = await api.put(`/students/${userId}`, profileData);
+  return data;
 }

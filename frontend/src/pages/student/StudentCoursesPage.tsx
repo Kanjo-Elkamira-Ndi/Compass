@@ -43,7 +43,8 @@ export function StudentCourses() {
     setCoursesError('');
     try {
       const res = await getCourses();
-      setAvailableCourses(res.data);
+      const courses = Array.isArray(res.data) ? res.data : [];
+      setAvailableCourses(courses);
       setCoursesState('data');
     } catch (err) {
       setCoursesError(err instanceof Error ? err.message : 'Failed to load courses.');
@@ -59,9 +60,9 @@ export function StudentCourses() {
       getCourses(),
     ]).then(([enrollmentsRes, coursesRes]) => {
       if (!cancelled) {
-        setEnrollments(enrollmentsRes.data);
+        setEnrollments(Array.isArray(enrollmentsRes.data) ? enrollmentsRes.data : []);
         setEnrollmentsState('data');
-        setAvailableCourses(coursesRes.data);
+        setAvailableCourses(Array.isArray(coursesRes.data) ? coursesRes.data : []);
         setCoursesState('data');
       }
     }).catch(err => {

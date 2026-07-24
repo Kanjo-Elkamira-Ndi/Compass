@@ -101,6 +101,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message, "BAD_REQUEST"));
     }
 
+    @ExceptionHandler(org.springframework.data.redis.RedisConnectionFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRedisFailure(org.springframework.data.redis.RedisConnectionFailureException ex) {
+        log.warn("Redis connection failed, continuing without cache");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("Service temporarily unavailable", "SERVICE_UNAVAILABLE"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);

@@ -55,6 +55,17 @@ export function AIChat() {
       setSessions(res.data);
       if (res.data.length > 0 && !activeSessionId) {
         setActiveSessionId(res.data[0].id);
+      } else if (!activeSessionId) {
+        // Auto-create a default session
+        const defaultSession: ChatSession = {
+          id: 'default-session',
+          title: 'New Chat',
+          createdAt: new Date().toISOString(),
+          lastMessageAt: new Date().toISOString(),
+          messageCount: 0,
+        };
+        setSessions([defaultSession]);
+        setActiveSessionId(defaultSession.id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sessions');
@@ -306,7 +317,7 @@ export function AIChat() {
                       </div>
                     )}
                     <p className={`text-[10px] text-muted-foreground mt-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                      {format(new Date(msg.createdAt), 'HH:mm')}
+                      {msg.createdAt ? format(new Date(msg.createdAt), 'HH:mm') : ''}
                     </p>
                   </div>
                 </div>

@@ -217,7 +217,7 @@ export function LecturerDashboard() {
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-mono hidden md:table-cell">{student.gpa.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-mono hidden md:table-cell">{student.gpa?.toFixed(2) ?? 'N/A'}</TableCell>
                       <TableCell className="text-right font-mono hidden md:table-cell">{student.riskScore}/100</TableCell>
                       <TableCell className="text-right">
                         <Button

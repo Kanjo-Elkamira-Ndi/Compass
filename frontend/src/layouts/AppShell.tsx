@@ -61,7 +61,6 @@ const LECTURER_NAV: NavItem[] = [
   { label: "Dashboard", path: "/lecturer/dashboard", icon: LayoutDashboard },
   { label: "Students", path: "/lecturer/students", icon: Users },
   { label: "Courses", path: "/lecturer/courses", icon: BookOpen },
-  { label: "Timetable", path: "/lecturer/courses", icon: Calendar },
   { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
   { label: "Exam Generator", path: "/ai/exam-generator", icon: FileText },
 ];

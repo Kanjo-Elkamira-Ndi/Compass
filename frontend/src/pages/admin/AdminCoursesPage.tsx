@@ -91,9 +91,9 @@ export function AdminCourses() {
   }, [fetchData]);
 
   const filteredCourses = courses.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.code.toLowerCase().includes(search.toLowerCase()) ||
-    c.programme.toLowerCase().includes(search.toLowerCase())
+    (c.title || c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.code || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.programme || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const openCreateDialog = () => {

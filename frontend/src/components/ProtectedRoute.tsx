@@ -20,7 +20,7 @@ const PROTECTED_ROUTES: Record<string, Role[]> = {
   "/admin/rag": ["ADMIN"],
 };
 
-function getDefaultDashboard(role: Role): string {
+function getDefaultDashboard(role: Role | undefined): string {
   switch (role) {
     case "STUDENT":
       return "/student/dashboard";
@@ -28,6 +28,8 @@ function getDefaultDashboard(role: Role): string {
       return "/lecturer/dashboard";
     case "ADMIN":
       return "/admin/users";
+    default:
+      return "/login";
   }
 }
 
@@ -39,9 +41,10 @@ export default function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  const userRole = user.role as Role | undefined;
   const allowedRoles = PROTECTED_ROUTES[location.pathname];
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={getDefaultDashboard(user.role)} replace />;
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    return <Navigate to={getDefaultDashboard(userRole)} replace />;
   }
 
   return <Outlet />;
