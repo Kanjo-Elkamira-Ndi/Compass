@@ -175,7 +175,7 @@ export function LecturerStudents() {
                       <TableCell className="font-medium">{student.name}</TableCell>
                       <TableCell className="text-muted-foreground font-mono text-xs">{student.studentId}</TableCell>
                       <TableCell className="hidden sm:table-cell text-muted-foreground">{student.programme}</TableCell>
-                      <TableCell className="hidden md:table-cell text-right font-mono">{student.gpa.toFixed(2)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-right font-mono">{student.gpa?.toFixed(2) ?? 'N/A'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={`size-2 rounded-full ${getRiskLevelDot(student.riskLevel)}`} />

@@ -167,7 +167,7 @@ export function StudentResults() {
                       <TableCell>
                         <Badge className={getGradeColor(record.grade)}>{record.grade}</Badge>
                       </TableCell>
-                      <TableCell className="text-right font-mono">{record.gpaPoints.toFixed(1)}</TableCell>
+                      <TableCell className="text-right font-mono">{record.gpaPoints?.toFixed(1) ?? 'N/A'}</TableCell>
                       <TableCell className="text-right">{record.credits}</TableCell>
                     </TableRow>
                   ))}

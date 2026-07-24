@@ -239,7 +239,7 @@ export function AIResearch() {
                               {formatFileSize(upload.fileSize)}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
-                              {format(new Date(upload.uploadedAt), 'MMM d')}
+                              {upload.uploadedAt ? format(new Date(upload.uploadedAt), 'MMM d') : 'N/A'}
                             </span>
                           </div>
                         </div>
