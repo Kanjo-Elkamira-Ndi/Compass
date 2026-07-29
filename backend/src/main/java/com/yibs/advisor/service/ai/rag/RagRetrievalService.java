@@ -2,15 +2,14 @@ package com.yibs.advisor.service.ai.rag;
 
 import com.yibs.advisor.domain.ai.DocumentChunk;
 import com.yibs.advisor.repository.DocumentChunkRepository;
+import com.yibs.advisor.service.ai.embedding.EmbeddingService;
 import com.yibs.advisor.service.ai.provider.AIProviderStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,8 +19,11 @@ public class RagRetrievalService {
 
     private final DocumentChunkRepository documentChunkRepository;
     private final AIProviderStrategy aiProvider;
+    private final EmbeddingService embeddingService;
 
     private static final int DEFAULT_LIMIT = 5;
+    private static final int HYBRID_CANDIDATES = 20;
+    private static final int RRF_K = 60;
 
     private static final Set<String> STOP_WORDS = Set.of(
         "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
@@ -54,26 +56,79 @@ public class RagRetrievalService {
                 return Collections.emptyList();
             }
 
-            List<DocumentChunk> results;
-            if (sourceDocument != null) {
-                results = documentChunkRepository.findByTextSearchInDocument(tsquery, sourceDocument, limit);
-            } else {
-                results = documentChunkRepository.findByTextSearch(tsquery, limit);
-            }
-
-            if (results.isEmpty()) {
+            List<ScoredChunk> fused = hybridSearch(tsquery, sourceDocument, expanded);
+            if (fused.isEmpty()) {
                 log.debug("No relevant chunks found for query: {}", tsquery);
                 return Collections.emptyList();
             }
 
-            log.debug("Retrieved {} relevant chunks for tsquery: {}", results.size(), tsquery);
-            return results;
+            fused.sort((a, b) -> Double.compare(b.score, a.score));
+            List<DocumentChunk> top = fused.stream()
+                    .limit(limit)
+                    .map(s -> s.chunk)
+                    .toList();
+
+            log.debug("Retrieved {} chunks via hybrid search ({} candidates fused)", top.size(), fused.size());
+            return top;
         } catch (Exception e) {
-            log.warn("Full-text search failed, falling back to all chunks: {}", e.getMessage());
+            log.warn("Hybrid search failed, falling back to all chunks: {}", e.getMessage());
             List<DocumentChunk> all = documentChunkRepository.findAll();
             return all.size() > limit ? all.subList(0, limit) : all;
         }
     }
+
+    private List<ScoredChunk> hybridSearch(String tsquery, String sourceDocument, String rawQuery) {
+        Map<UUID, ScoredChunk> fused = new LinkedHashMap<>();
+
+        List<Object[]> ftsResults;
+        if (sourceDocument != null) {
+            ftsResults = documentChunkRepository.findByTextSearchInDocumentWithScore(tsquery, sourceDocument, HYBRID_CANDIDATES);
+        } else {
+            ftsResults = documentChunkRepository.findByTextSearchWithScore(tsquery, HYBRID_CANDIDATES);
+        }
+
+        for (int rank = 0; rank < ftsResults.size(); rank++) {
+            Object[] row = ftsResults.get(rank);
+            DocumentChunk chunk = rowToChunk(row);
+            double rrfScore = 1.0 / (RRF_K + rank + 1);
+            fused.put(chunk.getId(), new ScoredChunk(chunk, rrfScore));
+        }
+
+        if (embeddingService.isAvailable()) {
+            try {
+                float[] queryVector = embeddingService.embed(rawQuery);
+                if (queryVector.length > 0) {
+                    String vectorStr = embeddingService.toVectorString(queryVector);
+                    List<Object[]> vecResults = documentChunkRepository.findNearestNeighborsWithScore(vectorStr, HYBRID_CANDIDATES);
+
+                    for (int rank = 0; rank < vecResults.size(); rank++) {
+                        Object[] row = vecResults.get(rank);
+                        DocumentChunk chunk = rowToChunk(row);
+                        double rrfScore = 1.0 / (RRF_K + rank + 1);
+                        fused.merge(chunk.getId(), new ScoredChunk(chunk, rrfScore),
+                                (existing, incoming) -> new ScoredChunk(existing.chunk, existing.score + incoming.score));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Vector search failed, using FTS-only results: {}", e.getMessage());
+            }
+        }
+
+        return new ArrayList<>(fused.values());
+    }
+
+    private DocumentChunk rowToChunk(Object[] row) {
+        return DocumentChunk.builder()
+                .id((UUID) row[0])
+                .sourceDocument((String) row[1])
+                .pageNumber(row[2] != null ? ((Number) row[2]).shortValue() : null)
+                .content((String) row[3])
+                .embedding((String) row[4])
+                .createdAt(row[5] != null ? OffsetDateTime.parse(row[5].toString()) : null)
+                .build();
+    }
+
+    private record ScoredChunk(DocumentChunk chunk, double score) {}
 
     private String expandQuery(String query) {
         try {

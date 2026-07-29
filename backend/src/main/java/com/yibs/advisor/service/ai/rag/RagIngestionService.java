@@ -2,6 +2,7 @@ package com.yibs.advisor.service.ai.rag;
 
 import com.yibs.advisor.domain.ai.DocumentChunk;
 import com.yibs.advisor.repository.DocumentChunkRepository;
+import com.yibs.advisor.service.ai.embedding.EmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,7 @@ import java.util.List;
 public class RagIngestionService {
 
     private final DocumentChunkRepository documentChunkRepository;
+    private final EmbeddingService embeddingService;
 
     public int ingestDocument(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename();
@@ -55,17 +56,27 @@ public class RagIngestionService {
 
         int ingested = 0;
         for (int i = 0; i < chunks.size(); i++) {
+            String chunkText = chunks.get(i);
+            String embedding = null;
+            if (embeddingService.isAvailable()) {
+                embedding = embeddingService.toVectorString(embeddingService.embed(chunkText));
+            }
+
             DocumentChunk documentChunk = DocumentChunk.builder()
                     .sourceDocument(sourceName)
                     .pageNumber((short) (i + 1))
-                    .content(chunks.get(i))
+                    .content(chunkText)
+                    .embedding(embedding)
                     .build();
 
             documentChunkRepository.save(documentChunk);
             ingested++;
         }
 
-        log.info("Successfully ingested {} chunks from {}", ingested, sourceName);
+        long withEmbeddings = documentChunkRepository.findBySourceDocument(sourceName)
+                .stream().filter(c -> c.getEmbedding() != null).count();
+        log.info("Successfully ingested {} chunks from {} (chunks with embeddings: {}/{})", ingested, sourceName,
+                withEmbeddings, ingested);
         return ingested;
     }
 
