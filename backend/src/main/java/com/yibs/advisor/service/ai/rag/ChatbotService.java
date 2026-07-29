@@ -6,6 +6,7 @@ import com.yibs.advisor.domain.ai.DocumentChunk;
 import com.yibs.advisor.domain.user.User;
 import com.yibs.advisor.dto.response.ChatHistoryResponse;
 import com.yibs.advisor.dto.response.ChatResponse;
+import com.yibs.advisor.dto.response.WebSearchResult;
 import com.yibs.advisor.repository.ChatMessageRepository;
 import com.yibs.advisor.repository.UserRepository;
 import com.yibs.advisor.service.ai.provider.AIProviderStrategy;
@@ -31,11 +32,12 @@ public class ChatbotService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final RagIngestionService ragIngestionService;
+    private final WebSearchService webSearchService;
 
-    private static final String SYSTEM_PROMPT = """
+    private static final String SYSTEM_PROMPT_INTERNAL = """
             You are an AI academic advisor for YIBS (Yaoundé International Business School).
             Your knowledge comes from the YIBS documents provided in the context below.
-            
+
             CRITICAL RULES:
             - Answer ONLY using the information from the context sections provided below.
             - If the context does not contain the answer, say "I don't have information about that in the YIBS documents."
@@ -45,31 +47,80 @@ public class ChatbotService {
             - Be concise, clear, and direct. This is a university advising context.
             """;
 
+    private static final String SYSTEM_PROMPT_WEB = """
+            You are an AI academic advisor for YIBS (Yaoundé International Business School).
+            You have access to both internal YIBS documents and web search results.
+
+            CRITICAL RULES:
+            - Prioritize information from the YIBS internal documents when available.
+            - Use web search results to supplement or provide information not found in internal documents.
+            - If you use web information, indicate it naturally (e.g. "According to recent information...").
+            - Do NOT mention URLs, source names, or documents in your answer.
+            - Be concise, clear, and direct. This is a university advising context.
+            """;
+
     @Transactional
     public ChatResponse chat(UUID userId, String sessionId, String message) {
         List<DocumentChunk> relevantChunks = ragRetrievalService.retrieveRelevantChunks(message);
 
-        PromptBuilder promptBuilder = PromptBuilder.create()
-                .systemPrompt(SYSTEM_PROMPT);
+        PromptBuilder promptBuilder = PromptBuilder.create();
 
-        if (!relevantChunks.isEmpty()) {
+        boolean hasInternal = relevantChunks != null && !relevantChunks.isEmpty();
+
+        if (hasInternal) {
+            promptBuilder.systemPrompt(SYSTEM_PROMPT_INTERNAL);
             for (DocumentChunk chunk : relevantChunks) {
                 promptBuilder.addContext(chunk.getContent());
             }
-        } else {
-            promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question.]");
         }
 
         promptBuilder.addUserMessage(message);
 
-        String answer = aiProvider.chat(
-                promptBuilder.buildSystemPrompt(),
-                promptBuilder.buildUserMessage()
-        );
+        String answer;
+        List<ChatResponse.Citation> citations;
+
+        if (hasInternal) {
+            answer = aiProvider.chat(
+                    promptBuilder.buildSystemPrompt(),
+                    promptBuilder.buildUserMessage()
+            );
+            citations = relevantChunks.stream()
+                    .map(chunk -> ChatResponse.Citation.fromDocument(
+                            chunk.getSourceDocument(),
+                            chunk.getPageNumber() != null ? chunk.getPageNumber().intValue() : null,
+                            chunk.getContent()))
+                    .collect(Collectors.toList());
+        } else {
+            promptBuilder.systemPrompt(SYSTEM_PROMPT_WEB);
+            promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question. Searching the web...]");
+
+            List<WebSearchResult> webResults = webSearchService.search(message);
+            if (!webResults.isEmpty()) {
+                promptBuilder.addContext("Web search results:");
+                for (WebSearchResult result : webResults) {
+                    promptBuilder.addContext("- " + result.getTitle() + ": " + result.getContent());
+                }
+            } else {
+                promptBuilder.addContext("[No web search results available.]");
+            }
+
+            answer = aiProvider.chat(
+                    promptBuilder.buildSystemPrompt(),
+                    promptBuilder.buildUserMessage()
+            );
+
+            if (!webResults.isEmpty()) {
+                citations = webResults.stream()
+                        .map(r -> ChatResponse.Citation.fromWeb(r.getTitle(), r.getUrl(), r.getContent(), r.getScore()))
+                        .collect(Collectors.toList());
+            } else {
+                citations = Collections.emptyList();
+            }
+        }
 
         UUID sessionUuid = UUID.nameUUIDFromBytes(sessionId.getBytes());
-
         User user = userRepository.findById(userId).orElse(null);
+
         ChatMessage userMsg = ChatMessage.builder()
                 .sessionId(sessionUuid)
                 .user(user)
@@ -89,17 +140,6 @@ public class ChatbotService {
         String sourceText = buildSourceText(relevantChunks);
         String answerWithSources = answer + (sourceText.isEmpty() ? "" : "\n\n" + sourceText);
 
-        List<ChatResponse.Citation> citations = relevantChunks.stream()
-                .map(chunk -> ChatResponse.Citation.builder()
-                        .sourceDocument(chunk.getSourceDocument())
-                        .pageNumber(chunk.getPageNumber() != null ? chunk.getPageNumber().intValue() : null)
-                        .content(chunk.getContent().length() > 200
-                                ? chunk.getContent().substring(0, 200) + "..."
-                                : chunk.getContent())
-                        .relevance(0.85)
-                        .build())
-                .toList();
-
         return ChatResponse.builder()
                 .sessionId(sessionId)
                 .answer(answerWithSources)
@@ -108,7 +148,7 @@ public class ChatbotService {
     }
 
     private String buildSourceText(List<DocumentChunk> chunks) {
-        if (chunks.isEmpty()) return "";
+        if (chunks == null || chunks.isEmpty()) return "";
 
         String docName = chunks.get(0).getSourceDocument()
                 .replace(".pdf", "")

@@ -11,6 +11,7 @@ import com.yibs.advisor.service.ai.provider.AIProviderStrategy;
 import com.yibs.advisor.service.ai.rag.ChatbotService;
 import com.yibs.advisor.service.ai.rag.RagIngestionService;
 import com.yibs.advisor.service.ai.rag.RagRetrievalService;
+import com.yibs.advisor.service.ai.rag.WebSearchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,7 @@ class ChatbotServiceTest {
     @Mock private RagIngestionService ragIngestionService;
     @Mock private ChatMessageRepository chatMessageRepository;
     @Mock private UserRepository userRepository;
+    @Mock private WebSearchService webSearchService;
 
     @InjectMocks private ChatbotService chatbotService;
 
@@ -81,6 +83,7 @@ class ChatbotServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(ragRetrievalService.retrieveRelevantChunks(anyString()))
                 .thenReturn(List.of());
+        when(webSearchService.search(anyString())).thenReturn(List.of());
         when(aiProvider.chat(any(), any())).thenReturn("I don't have information about that in the YIBS documents.");
 
         ChatResponse response = chatbotService.chat(user.getId(), "session-002", "What is the tuition fee?");

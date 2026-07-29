@@ -62,3 +62,5 @@ app:
       api-key:
     gemini:
       api-key:
+    tavily:
+      api-key: ${TAVILY_API_KEY:}
