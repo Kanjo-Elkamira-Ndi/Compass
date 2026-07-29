@@ -34,13 +34,16 @@ public class ChatbotService {
     private final RagIngestionService ragIngestionService;
     private final WebSearchService webSearchService;
 
+    private static final String UNKNOWN_PHRASE = "I don't have information about that in the YIBS documents.";
+
     private static final String SYSTEM_PROMPT_INTERNAL = """
             You are an AI academic advisor for YIBS (Yaoundé International Business School).
             Your knowledge comes from the YIBS documents provided in the context below.
 
             CRITICAL RULES:
             - Answer ONLY using the information from the context sections provided below.
-            - If the context does not contain the answer, say "I don't have information about that in the YIBS documents."
+            - If the context does not contain the answer, say \"""" + UNKNOWN_PHRASE + """
+            \"
             - Do NOT use any general knowledge, assumptions, or external information.
             - Do NOT mention page numbers, source names, or documents anywhere in your answer.
             - Answer as if you naturally know the information — no inline citations.
@@ -78,44 +81,33 @@ public class ChatbotService {
 
         String answer;
         List<ChatResponse.Citation> citations;
+        boolean usedInternal = hasInternal;
 
         if (hasInternal) {
             answer = aiProvider.chat(
                     promptBuilder.buildSystemPrompt(),
                     promptBuilder.buildUserMessage()
             );
-            citations = relevantChunks.stream()
-                    .map(chunk -> ChatResponse.Citation.fromDocument(
-                            chunk.getSourceDocument(),
-                            chunk.getPageNumber() != null ? chunk.getPageNumber().intValue() : null,
-                            chunk.getContent()))
-                    .collect(Collectors.toList());
-        } else {
-            promptBuilder.systemPrompt(SYSTEM_PROMPT_WEB);
-            promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question. Searching the web...]");
 
-            List<WebSearchResult> webResults = webSearchService.search(message);
-            if (!webResults.isEmpty()) {
-                promptBuilder.addContext("Web search results:");
-                for (WebSearchResult result : webResults) {
-                    promptBuilder.addContext("- " + result.getTitle() + ": " + result.getContent());
-                }
+            if (answer.contains(UNKNOWN_PHRASE)) {
+                log.debug("Internal RAG returned unknown answer, falling back to web search");
+                usedInternal = false;
+                WebFallbackResult fallback = answerWithWebFallback(message, promptBuilder);
+                answer = fallback.answer();
+                citations = fallback.citations();
             } else {
-                promptBuilder.addContext("[No web search results available.]");
-            }
-
-            answer = aiProvider.chat(
-                    promptBuilder.buildSystemPrompt(),
-                    promptBuilder.buildUserMessage()
-            );
-
-            if (!webResults.isEmpty()) {
-                citations = webResults.stream()
-                        .map(r -> ChatResponse.Citation.fromWeb(r.getTitle(), r.getUrl(), r.getContent(), r.getScore()))
+                citations = relevantChunks.stream()
+                        .map(chunk -> ChatResponse.Citation.fromDocument(
+                                chunk.getSourceDocument(),
+                                chunk.getPageNumber() != null ? chunk.getPageNumber().intValue() : null,
+                                chunk.getContent()))
                         .collect(Collectors.toList());
-            } else {
-                citations = Collections.emptyList();
             }
+        } else {
+            usedInternal = false;
+            WebFallbackResult fallback = answerWithWebFallback(message, promptBuilder);
+            answer = fallback.answer();
+            citations = fallback.citations();
         }
 
         UUID sessionUuid = UUID.nameUUIDFromBytes(sessionId.getBytes());
@@ -137,7 +129,7 @@ public class ChatbotService {
                 .build();
         chatMessageRepository.save(assistantMsg);
 
-        String sourceText = buildSourceText(relevantChunks);
+        String sourceText = usedInternal ? buildSourceText(relevantChunks) : "";
         String answerWithSources = answer + (sourceText.isEmpty() ? "" : "\n\n" + sourceText);
 
         return ChatResponse.builder()
@@ -146,6 +138,39 @@ public class ChatbotService {
                 .citations(citations)
                 .build();
     }
+
+    private WebFallbackResult answerWithWebFallback(String message, PromptBuilder promptBuilder) {
+        promptBuilder.systemPrompt(SYSTEM_PROMPT_WEB);
+        promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question. Searching the web...]");
+
+        List<WebSearchResult> webResults = webSearchService.search(message);
+        if (!webResults.isEmpty()) {
+            promptBuilder.addContext("Web search results:");
+            for (WebSearchResult result : webResults) {
+                promptBuilder.addContext("- " + result.getTitle() + ": " + result.getContent());
+            }
+        } else {
+            promptBuilder.addContext("[No web search results available.]");
+        }
+
+        String answer = aiProvider.chat(
+                promptBuilder.buildSystemPrompt(),
+                promptBuilder.buildUserMessage()
+        );
+
+        List<ChatResponse.Citation> citations;
+        if (!webResults.isEmpty()) {
+            citations = webResults.stream()
+                    .map(r -> ChatResponse.Citation.fromWeb(r.getTitle(), r.getUrl(), r.getContent(), r.getScore()))
+                    .collect(Collectors.toList());
+        } else {
+            citations = Collections.emptyList();
+        }
+
+        return new WebFallbackResult(answer, citations);
+    }
+
+    private record WebFallbackResult(String answer, List<ChatResponse.Citation> citations) {}
 
     private String buildSourceText(List<DocumentChunk> chunks) {
         if (chunks == null || chunks.isEmpty()) return "";
