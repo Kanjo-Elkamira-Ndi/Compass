@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/compass_ai
     username: postgres
-    password: codex4587
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -24,7 +24,9 @@ spring:
         format_sql: true
 
   flyway:
-    enabled: false
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 11
 
   data:
     redis:
@@ -32,6 +34,12 @@ spring:
 
   ai:
     active-provider: openai
+    openai:
+      api-key: ${GROQ_API_KEY}
+      base-url: https://api.groq.com/openai
+      chat:
+        options:
+          model: llama-3.3-70b-versatile
 
 management:
   endpoints:
@@ -47,6 +55,8 @@ app:
     secret: dev-only-change-in-production-minimum-256-bits-required-for-hs256-algorithm
     access-token-expiration-ms: 900000
     refresh-token-expiration-days: 7
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:3000
   ai:
     openai:
       api-key:

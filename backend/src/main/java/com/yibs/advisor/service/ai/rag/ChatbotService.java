@@ -7,7 +7,6 @@ import com.yibs.advisor.domain.user.User;
 import com.yibs.advisor.dto.response.ChatHistoryResponse;
 import com.yibs.advisor.dto.response.ChatResponse;
 import com.yibs.advisor.repository.ChatMessageRepository;
-import com.yibs.advisor.repository.DocumentChunkRepository;
 import com.yibs.advisor.repository.UserRepository;
 import com.yibs.advisor.service.ai.provider.AIProviderStrategy;
 import com.yibs.advisor.service.ai.provider.PromptBuilder;
@@ -16,8 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,24 +27,28 @@ import java.util.UUID;
 public class ChatbotService {
 
     private final AIProviderStrategy aiProvider;
-    private final DocumentChunkRepository documentChunkRepository;
+    private final RagRetrievalService ragRetrievalService;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final RagIngestionService ragIngestionService;
 
     private static final String SYSTEM_PROMPT = """
             You are an AI academic advisor for YIBS (Yaoundé International Business School).
-            You help students with course selection, academic planning, degree requirements,
-            and university policies. Be helpful, concise, and accurate.
-            If you're unsure about something, say so rather than guessing.
-            When you use information from provided context, mention the source.
+            Your knowledge comes from the YIBS documents provided in the context below.
+            
+            CRITICAL RULES:
+            - Answer ONLY using the information from the context sections provided below.
+            - If the context does not contain the answer, say "I don't have information about that in the YIBS documents."
+            - Do NOT use any general knowledge, assumptions, or external information.
+            - Do NOT mention page numbers, source names, or documents anywhere in your answer.
+            - Answer as if you naturally know the information — no inline citations.
+            - Be concise, clear, and direct. This is a university advising context.
             """;
 
     @Transactional
     public ChatResponse chat(UUID userId, String sessionId, String message) {
-        // Retrieve all available chunks (embedding search requires a provider that supports embeddings)
-        List<DocumentChunk> relevantChunks = documentChunkRepository.findAll();
+        List<DocumentChunk> relevantChunks = ragRetrievalService.retrieveRelevantChunks(message);
 
-        // Build prompt with RAG context
         PromptBuilder promptBuilder = PromptBuilder.create()
                 .systemPrompt(SYSTEM_PROMPT);
 
@@ -50,20 +56,19 @@ public class ChatbotService {
             for (DocumentChunk chunk : relevantChunks) {
                 promptBuilder.addContext(chunk.getContent());
             }
+        } else {
+            promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question.]");
         }
 
         promptBuilder.addUserMessage(message);
 
-        // Get AI response
         String answer = aiProvider.chat(
                 promptBuilder.buildSystemPrompt(),
                 promptBuilder.buildUserMessage()
         );
 
-        // Generate a deterministic UUID from the sessionId string
         UUID sessionUuid = UUID.nameUUIDFromBytes(sessionId.getBytes());
 
-        // Save user message
         User user = userRepository.findById(userId).orElse(null);
         ChatMessage userMsg = ChatMessage.builder()
                 .sessionId(sessionUuid)
@@ -73,7 +78,6 @@ public class ChatbotService {
                 .build();
         chatMessageRepository.save(userMsg);
 
-        // Save assistant response
         ChatMessage assistantMsg = ChatMessage.builder()
                 .sessionId(sessionUuid)
                 .user(user)
@@ -82,7 +86,9 @@ public class ChatbotService {
                 .build();
         chatMessageRepository.save(assistantMsg);
 
-        // Build citations from relevant chunks
+        String sourceText = buildSourceText(relevantChunks);
+        String answerWithSources = answer + (sourceText.isEmpty() ? "" : "\n\n" + sourceText);
+
         List<ChatResponse.Citation> citations = relevantChunks.stream()
                 .map(chunk -> ChatResponse.Citation.builder()
                         .sourceDocument(chunk.getSourceDocument())
@@ -96,9 +102,28 @@ public class ChatbotService {
 
         return ChatResponse.builder()
                 .sessionId(sessionId)
-                .answer(answer)
+                .answer(answerWithSources)
                 .citations(citations)
                 .build();
+    }
+
+    private String buildSourceText(List<DocumentChunk> chunks) {
+        if (chunks.isEmpty()) return "";
+
+        String docName = chunks.get(0).getSourceDocument()
+                .replace(".pdf", "")
+                .replace("_", " ");
+        StringBuilder sb = new StringBuilder("Source: ").append(docName).append(" ");
+        String pages = chunks.stream()
+                .map(DocumentChunk::getPageNumber)
+                .filter(Objects::nonNull)
+                .map(Short::intValue)
+                .sorted()
+                .distinct()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+        sb.append(pages);
+        return sb.toString();
     }
 
     @Transactional(readOnly = true)

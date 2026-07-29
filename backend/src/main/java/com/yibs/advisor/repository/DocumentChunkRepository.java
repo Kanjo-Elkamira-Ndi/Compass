@@ -17,4 +17,26 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
         @Param("embedding") String embedding,
         @Param("limit") int limit
     );
+
+    @Query(value = "SELECT * FROM document_chunks " +
+            "WHERE search_vector @@ to_tsquery('english', :tsquery) " +
+            "ORDER BY ts_rank(search_vector, to_tsquery('english', :tsquery)) DESC " +
+            "LIMIT :limit", nativeQuery = true)
+    List<DocumentChunk> findByTextSearch(
+        @Param("tsquery") String tsquery,
+        @Param("limit") int limit
+    );
+
+    @Query(value = "SELECT * FROM document_chunks " +
+            "WHERE search_vector @@ to_tsquery('english', :tsquery) " +
+            "AND source_document = :source " +
+            "ORDER BY ts_rank(search_vector, to_tsquery('english', :tsquery)) DESC " +
+            "LIMIT :limit", nativeQuery = true)
+    List<DocumentChunk> findByTextSearchInDocument(
+        @Param("tsquery") String tsquery,
+        @Param("source") String source,
+        @Param("limit") int limit
+    );
+
+    List<DocumentChunk> findBySourceDocument(String sourceDocument);
 }
