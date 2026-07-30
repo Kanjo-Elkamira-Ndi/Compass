@@ -1,0 +1,13 @@
+tree f196a3ff38b7b854ae9c8a606e1e2589862ff60a
+parent 5ab3a03260d141c4deeecd716cfbdb3be2cbb925
+author Kanjo-Elkamira-Ndi <kanjoel39@gmail.com> 1784140280 +0100
+committer Kanjo-Elkamira-Ndi <kanjoel39@gmail.com> 1784140280 +0100
+
+chore: add Phase 0 Spring Boot scaffold and project config
+
+- Add backend/ with Spring Boot 3.4.5, Java 17, Maven wrapper
+- Add docker-compose.yml (Postgres 16 + pgvector, Redis 7)
+- Add ApiResponse<T> envelope and GlobalExceptionHandler
+- Add .env.example and root .gitignore
+- Update context files for Java 17 (system has JRE 21 only, JDK 17 available)
+- Verify: app starts, connects to Postgres, /actuator/health returns UP

@@ -1,0 +1,13 @@
+f434f683c0e303500151dc89c0391ef117f2b24c commit	refs/heads/backend
+eda4be898fb7807b4b01e1c417f9d0eebccc722f commit	refs/heads/frontend
+60a824bea693ae22fbe10aa8db33d7d581c286c5 commit	refs/heads/main
+804b7528b760a28ed9dcef5ea75343b66be55a14 commit	refs/original/refs/heads/backend
+4109784ed86cfa67864d843deff454c783011458 commit	refs/original/refs/heads/frontend
+5ab3a03260d141c4deeecd716cfbdb3be2cbb925 commit	refs/original/refs/heads/main
+186dd266b0d3a223aa156376e3ebd578586aeb02 commit	refs/original/refs/remotes/origin/backend
+4109784ed86cfa67864d843deff454c783011458 commit	refs/original/refs/remotes/origin/frontend
+b211b58ee7250f617e690d35918e55916df7cb45 commit	refs/original/refs/remotes/origin/main
+17cf6c3c78b01f81c856a9b84d5349ab9346b89a commit	refs/remotes/origin/HEAD
+f1124c24b496109d14acf31b967629d04526615f commit	refs/remotes/origin/backend
+4109784ed86cfa67864d843deff454c783011458 commit	refs/remotes/origin/frontend
+17cf6c3c78b01f81c856a9b84d5349ab9346b89a commit	refs/remotes/origin/main

@@ -70,10 +70,14 @@ public class AIController {
     }
 
     @GetMapping("/risk-assessment/{studentId}/latest")
-    public ResponseEntity<ApiResponse<RiskAssessmentResponse>> getLatestRiskAssessment(
-            @PathVariable UUID studentId) {
-        RiskAssessmentResponse response = riskAssessmentService.getLatest(studentId);
-        return ResponseEntity.ok(ApiResponse.ok(response));
+    public ResponseEntity<?> getLatestRiskAssessment(@PathVariable UUID studentId) {
+        try {
+            RiskAssessmentResponse response = riskAssessmentService.getLatest(studentId);
+            return ResponseEntity.ok(ApiResponse.ok(response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("No risk assessment found for this student", "NOT_FOUND"));
+        }
     }
 
     // ─── RAG Ingestion (temporary — move to AdminController in Phase 11) ──

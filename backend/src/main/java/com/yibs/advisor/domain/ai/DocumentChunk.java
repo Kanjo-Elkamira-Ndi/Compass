@@ -26,10 +26,10 @@ public class DocumentChunk {
     @Column(name = "page_number")
     private Short pageNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String content;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String embedding;
 
     @CreationTimestamp

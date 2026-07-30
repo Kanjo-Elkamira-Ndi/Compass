@@ -11,5 +11,6 @@ import java.util.UUID;
 public interface IPerformanceService {
     GradeRecordResponse submitGrade(GradeSubmissionRequest request);
     GpaResponse getStudentSummary(UUID studentId);
+    List<GradeRecordResponse> getGradeRecords(UUID studentId);
     List<RankingResponse> getRanking(UUID courseId);
 }

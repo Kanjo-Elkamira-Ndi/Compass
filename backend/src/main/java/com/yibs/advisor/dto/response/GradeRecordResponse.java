@@ -28,4 +28,5 @@ public class GradeRecordResponse {
     private BigDecimal totalScore;
     private String gradeLetter;
     private BigDecimal gradePoints;
+    private int credits;
 }
