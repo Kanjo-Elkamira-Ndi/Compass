@@ -28,6 +28,11 @@ spring:
     baseline-on-migrate: true
     baseline-version: 11
 
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 30MB
+
   data:
     redis:
       url: redis://localhost:6379

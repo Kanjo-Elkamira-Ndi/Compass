@@ -12,9 +12,6 @@ import type {
 // Create Axios instance with base URL
 const api = axios.create({
   baseURL: '/api/v1',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor — attach access token
@@ -256,15 +253,30 @@ export async function createChatSession(title: string): Promise<ApiResponse<Chat
 // ===================== Research Assistant =====================
 export async function getResearchUploads(): Promise<ApiResponse<ResearchUpload[]>> {
   const { data } = await api.get('/ai/research-assistant/history');
-  return data;
+  const items = data.data || [];
+  return {
+    success: true,
+    data: items.map((item: any) => ({
+      id: item.id,
+      fileName: item.fileName,
+      fileSize: item.fileSize,
+      status: 'completed' as const,
+      progress: 100,
+      uploadedAt: item.createdAt || new Date().toISOString(),
+      result: item.summary ? {
+        summary: item.summary,
+        keyFindings: item.keyFindings || [],
+        researchGaps: item.researchGaps || [],
+        futureWork: item.futureWork || [],
+      } : undefined,
+    })),
+  };
 }
 
 export async function uploadResearchDocument(file: File): Promise<ApiResponse<ResearchUpload>> {
   const formData = new FormData();
   formData.append('file', file);
-  const { data } = await api.post('/ai/research-assistant', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post('/ai/research-assistant', formData);
   // Transform backend ResearchAnalysisResponse to frontend ResearchUpload format
   const analysis = data.data;
   return {
@@ -416,9 +428,7 @@ export async function getRAGDocuments(): Promise<ApiResponse<RAGDocument[]>> {
 export async function uploadRAGDocument(file: File): Promise<ApiResponse<RAGDocument>> {
   const formData = new FormData();
   formData.append('file', file);
-  const { data } = await api.post('/admin/rag/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post('/admin/rag/upload', formData);
   return data;
 }
 

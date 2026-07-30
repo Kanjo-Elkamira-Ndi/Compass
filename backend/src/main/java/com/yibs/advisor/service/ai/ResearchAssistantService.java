@@ -84,7 +84,13 @@ public class ResearchAssistantService {
                 %s
                 """, text);
 
-        String aiResponse = aiProvider.chat(systemPrompt, userMessage);
+        String aiResponse;
+        try {
+            aiResponse = aiProvider.chat(systemPrompt, userMessage);
+        } catch (Exception e) {
+            log.warn("AI provider unavailable for research analysis: {}", e.getMessage());
+            aiResponse = "{\"summary\":\"AI analysis is currently unavailable. The document text has been extracted (" + text.length() + " characters). Please try again later.\",\"keyFindings\":[],\"researchGaps\":[],\"futureWork\":[]}";
+        }
 
         // Parse AI response
         String summary = "";
