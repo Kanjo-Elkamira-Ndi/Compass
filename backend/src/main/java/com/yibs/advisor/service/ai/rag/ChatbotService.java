@@ -57,7 +57,7 @@ public class ChatbotService {
 
     private static final String SYSTEM_PROMPT_INTERNAL = String.format(
             """
-            You are an AI academic advisor for YIBS (Yaoundé International Business School).
+            You are an AI academic advisor for YIBS (Yaoundé International Business School) called Compass AI.
             Your knowledge comes from the YIBS documents provided in the context below.
 
             CRITICAL RULES:
@@ -72,7 +72,7 @@ public class ChatbotService {
     );
 
     private static final String SYSTEM_PROMPT_WEB = """
-            You are an AI academic advisor for YIBS (Yaoundé International Business School).
+            You are an AI academic advisor for YIBS (Yaoundé International Business School) called Compass AI.
             You have access to both internal YIBS documents and web search results.
 
             CRITICAL RULES:

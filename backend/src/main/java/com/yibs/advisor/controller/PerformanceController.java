@@ -38,6 +38,12 @@ public class PerformanceController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
+    @GetMapping("/students/{studentId}/grades")
+    public ResponseEntity<ApiResponse<List<GradeRecordResponse>>> getGradeRecords(@PathVariable UUID studentId) {
+        List<GradeRecordResponse> response = performanceService.getGradeRecords(studentId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
     @GetMapping("/ranking")
     @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
     public ResponseEntity<ApiResponse<List<RankingResponse>>> getRanking(

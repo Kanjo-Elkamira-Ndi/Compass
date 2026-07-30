@@ -5,7 +5,7 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: advisor
+      POSTGRES_DB: compass_ai
       POSTGRES_USER: ${DB_USER:-advisor}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-advisor_dev}
     volumes:

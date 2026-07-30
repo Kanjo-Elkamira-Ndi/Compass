@@ -153,9 +153,18 @@ export async function dropCourse(enrollmentId: string): Promise<ApiResponse<null
 }
 
 // ===================== Grades =====================
-export async function getGradeRecords(studentId: string): Promise<ApiResponse<GradeRecord[]>> {
-  const { data } = await api.get(`/performance/students/${studentId}/summary`);
-  return data;
+export async function getGradeRecords(studentId: string): Promise<GradeRecord[]> {
+  const { data } = await api.get(`/performance/students/${studentId}/grades`);
+  return data.data.map((r: any) => ({
+    id: r.id,
+    courseId: r.courseId,
+    courseCode: r.courseCode,
+    courseName: r.courseName,
+    semester: r.academicYear ? `${r.semester}-${r.academicYear}` : String(r.semester),
+    grade: r.gradeLetter,
+    gpaPoints: r.gradePoints,
+    credits: r.credits,
+  }));
 }
 
 // ===================== Risk Assessment =====================
@@ -337,7 +346,18 @@ export async function getLecturerDashboard(lecturerId: string): Promise<ApiRespo
 export async function getLecturerStudents(): Promise<ApiResponse<any[]>> {
   const { data } = await api.get('/students');
   const students = data.data?.content || data.data || [];
-  return { success: true, data: students };
+  return {
+    success: true,
+    data: students.map((s: any) => ({
+      id: s.id,
+      name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim(),
+      studentId: s.studentId,
+      programme: s.programme ?? '',
+      riskLevel: s.riskLevel ?? 'Passing',
+      riskScore: s.riskScore ?? 0,
+      gpa: s.gpa ?? 0,
+    })),
+  };
 }
 
 export async function getLecturerTimetable(): Promise<ApiResponse<LecturerTimetable[]>> {
@@ -345,8 +365,8 @@ export async function getLecturerTimetable(): Promise<ApiResponse<LecturerTimeta
   return { success: true, data: [] };
 }
 
-export async function submitGrade(studentId: string, courseId: string, grade: string, gpaPoints: number): Promise<ApiResponse<null>> {
-  const { data } = await api.post('/performance/grades', { studentId, courseId, grade, gpaPoints });
+export async function submitGrade(studentId: string, courseId: string, gradeLetter: string, gpaPoints: number): Promise<ApiResponse<null>> {
+  const { data } = await api.post('/performance/grades', { studentId, courseId, gradeLetter, gradePoints: gpaPoints });
   return data;
 }
 

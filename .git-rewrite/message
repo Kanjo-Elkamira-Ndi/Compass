@@ -1,0 +1,9 @@
+feat(about): split Story into 5 alternating scroll-animated sections
+
+- New StorySection component with 5 story blocks, each with image + text
+- Alternating layout: text-left/image-right, then reversed, repeating
+- Framer Motion scroll-triggered fade+slide animations (inView, once)
+- Floating badges on sections 0, 2, 4 ('1,200+', '5 modules', 'Cameroon')
+- Sections: The Problem, The Insight, The Solution, The Proof, Today & Tomorrow
+- Sections alternate bg-background / bg-muted/30 for visual rhythm
+- Image hover zoom effect (scale-105)

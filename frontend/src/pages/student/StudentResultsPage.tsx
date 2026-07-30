@@ -36,8 +36,8 @@ export function StudentResults() {
     setState('loading');
     setError('');
     try {
-      const res = await getGradeRecords(user!.id);
-      setGrades(res.data);
+      const records = await getGradeRecords(user!.id);
+      setGrades(records);
       setState('data');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load results.');
@@ -48,9 +48,9 @@ export function StudentResults() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    getGradeRecords(user.id).then(res => {
+    getGradeRecords(user.id).then(records => {
       if (!cancelled) {
-        setGrades(res.data);
+        setGrades(records);
         setState('data');
       }
     }).catch(err => {
