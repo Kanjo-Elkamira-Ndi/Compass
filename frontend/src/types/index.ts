@@ -145,6 +145,12 @@ export interface ResearchResult {
   methodology: string;
 }
 
+export interface ResearchChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 // ===================== Exam Generator =====================
 export type QuestionType = 'mcq' | 'short-answer' | 'essay' | 'true-false';
 export type Difficulty = 'easy' | 'medium' | 'hard';

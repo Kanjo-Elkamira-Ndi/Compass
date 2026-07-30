@@ -21,5 +21,6 @@ public class ResearchAnalysisResponse {
     private List<String> keyFindings;
     private List<String> researchGaps;
     private List<String> futureWork;
+    private String extractedText;
     private OffsetDateTime createdAt;
 }

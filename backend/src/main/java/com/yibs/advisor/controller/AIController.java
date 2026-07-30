@@ -110,6 +110,39 @@ public class AIController {
         return ResponseEntity.ok(ApiResponse.ok(history));
     }
 
+    @GetMapping("/research-assistant/{analysisId}")
+    public ResponseEntity<ApiResponse<ResearchAnalysisResponse>> getResearchAnalysis(
+            @PathVariable UUID analysisId,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        ResearchAnalysisResponse response = researchAssistantService.getById(analysisId, userId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PostMapping("/research-assistant/{analysisId}/chat")
+    public ResponseEntity<ApiResponse<Map<String, String>>> chatAboutDocument(
+            @PathVariable UUID analysisId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        String question = body.get("question");
+        if (question == null || question.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Question is required", "BAD_REQUEST"));
+        }
+        String answer = researchAssistantService.chatAboutDocument(analysisId, userId, question);
+        return ResponseEntity.ok(ApiResponse.ok(Map.of("answer", answer)));
+    }
+
+    @DeleteMapping("/research-assistant/{analysisId}")
+    public ResponseEntity<ApiResponse<Void>> deleteResearchAnalysis(
+            @PathVariable UUID analysisId,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        researchAssistantService.deleteAnalysis(analysisId, userId);
+        return ResponseEntity.ok(ApiResponse.ok("Analysis deleted successfully", null));
+    }
+
     // ─── Exam Generator ─────────────────────────────────────
     @PostMapping("/exam-generator")
     @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")

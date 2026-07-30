@@ -298,19 +298,14 @@ export async function uploadResearchDocument(file: File): Promise<ApiResponse<Re
   };
 }
 
-export async function getResearchResult(uploadId: string): Promise<ApiResponse<ResearchUpload>> {
-  // Backend analyzes synchronously — return the upload as-is
-  return {
-    success: true,
-    data: {
-      id: uploadId,
-      fileName: 'document.pdf',
-      fileSize: 0,
-      status: 'completed',
-      progress: 100,
-      uploadedAt: new Date().toISOString(),
-    },
-  };
+export async function researchChat(analysisId: string, question: string): Promise<ApiResponse<{ answer: string }>> {
+  const { data } = await api.post(`/ai/research-assistant/${analysisId}/chat`, { question });
+  return data;
+}
+
+export async function deleteResearchUpload(analysisId: string): Promise<ApiResponse<null>> {
+  const { data } = await api.delete(`/ai/research-assistant/${analysisId}`);
+  return data;
 }
 
 // ===================== Exam Generator =====================

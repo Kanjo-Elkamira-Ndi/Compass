@@ -50,6 +50,9 @@ public class ResearchAnalysis {
     @Column(name = "future_work", columnDefinition = "jsonb")
     private List<String> futureWork;
 
+    @Column(name = "extracted_text", columnDefinition = "TEXT")
+    private String extractedText;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

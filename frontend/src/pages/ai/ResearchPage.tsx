@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Upload, FileText, AlertTriangle, ArrowRight, CheckCircle2, Clock,
-  Sparkles, FileUp, Inbox,
+  Sparkles, FileUp, Inbox, Trash2, Send, Bot, User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +11,13 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { ErrorState, EmptyState, LoadingState } from '@/components/shared/states';
-import { getResearchUploads, uploadResearchDocument, getResearchResult } from '@/api/client';
-import type { ResearchUpload, ResearchResult } from '@/types';
+import {
+  getResearchUploads, uploadResearchDocument,
+  researchChat, deleteResearchUpload,
+} from '@/api/client';
+import type { ResearchUpload, ResearchResult, ResearchChatMessage } from '@/types';
 import { format } from 'date-fns';
 
 function formatFileSize(bytes: number): string {
@@ -41,13 +45,21 @@ export function AIResearch() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [chatMessages, setChatMessages] = useState<ResearchChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatting, setIsChatting] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
   const loadUploads = useCallback(async () => {
     setIsLoadingUploads(true);
     setError(null);
     try {
       const res = await getResearchUploads();
       setUploads(res.data);
-      // Auto-select first completed
       const completed = res.data.find(u => u.status === 'completed' && u.result);
       if (completed) {
         setSelectedUpload(completed);
@@ -72,7 +84,6 @@ export function AIResearch() {
     setUploadProgress(0);
     setError(null);
 
-    // Simulate progress
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 90) {
@@ -87,22 +98,13 @@ export function AIResearch() {
       const uploadRes = await uploadResearchDocument(file);
       const newUpload: ResearchUpload = {
         ...uploadRes.data,
-        status: 'processing',
-        progress: 90,
+        status: 'completed',
+        progress: 100,
       };
       setUploads(prev => [newUpload, ...prev]);
       setSelectedUpload(newUpload);
-      setResult(null);
-
-      // Simulate completion after processing
-      const resultRes = await getResearchResult(uploadRes.data.id);
-      setUploads(prev =>
-        prev.map(u => u.id === uploadRes.data.id ? resultRes.data : u)
-      );
-      if (resultRes.data.result) {
-        setResult(resultRes.data.result);
-        setSelectedUpload(resultRes.data);
-      }
+      setResult(newUpload.result || null);
+      setChatMessages([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -136,13 +138,18 @@ export function AIResearch() {
 
   const handleSelectUpload = async (upload: ResearchUpload) => {
     setSelectedUpload(upload);
+    setChatMessages([]);
     if (upload.result) {
       setResult(upload.result);
     } else if (upload.status === 'completed') {
       setIsLoadingResult(true);
       try {
-        const res = await getResearchResult(upload.id);
-        setResult(res.data.result || null);
+        const res = await getResearchUploads();
+        const updated = res.data.find(u => u.id === upload.id);
+        if (updated?.result) {
+          setResult(updated.result);
+          setUploads(prev => prev.map(u => u.id === upload.id ? updated : u));
+        }
       } catch {
         setResult(null);
       } finally {
@@ -150,6 +157,61 @@ export function AIResearch() {
       }
     } else {
       setResult(null);
+    }
+  };
+
+  const handleDelete = async (uploadId: string) => {
+    try {
+      await deleteResearchUpload(uploadId);
+      setUploads(prev => prev.filter(u => u.id !== uploadId));
+      if (selectedUpload?.id === uploadId) {
+        setSelectedUpload(null);
+        setResult(null);
+        setChatMessages([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete');
+    }
+  };
+
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || !selectedUpload || isChatting) return;
+    const question = chatInput.trim();
+    setChatInput('');
+
+    const userMsg: ResearchChatMessage = {
+      id: 'user-' + Date.now(),
+      role: 'user',
+      content: question,
+    };
+    setChatMessages(prev => [...prev, userMsg]);
+
+    setIsChatting(true);
+    try {
+      const res = await researchChat(selectedUpload.id, question);
+      const answer = res.data?.answer || 'No response received.';
+      const assistantMsg: ResearchChatMessage = {
+        id: 'assistant-' + Date.now(),
+        role: 'assistant',
+        content: answer,
+      };
+      setChatMessages(prev => [...prev, assistantMsg]);
+    } catch (err) {
+      const errMsg: ResearchChatMessage = {
+        id: 'assistant-' + Date.now(),
+        role: 'assistant',
+        content: 'Sorry, I could not process your question. Please try again.',
+      };
+      setChatMessages(prev => [...prev, errMsg]);
+    } finally {
+      setIsChatting(false);
+    }
+  };
+
+  const handleChatKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendChat();
     }
   };
 
@@ -224,27 +286,36 @@ export function AIResearch() {
                   {uploads.map(upload => {
                     const st = statusBadge[upload.status] || statusBadge.uploading;
                     return (
-                      <button
-                        key={upload.id}
-                        onClick={() => handleSelectUpload(upload)}
-                        className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors hover:bg-accent flex items-center gap-3 ${
-                          selectedUpload?.id === upload.id ? 'bg-accent' : ''
-                        }`}
-                      >
-                        <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-xs">{upload.fileName}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] text-muted-foreground">
-                              {formatFileSize(upload.fileSize)}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {upload.uploadedAt ? format(new Date(upload.uploadedAt), 'MMM d') : 'N/A'}
-                            </span>
+                      <div key={upload.id} className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleSelectUpload(upload)}
+                          className={`flex-1 text-left px-3 py-2.5 rounded-md text-sm transition-colors hover:bg-accent flex items-center gap-3 ${
+                            selectedUpload?.id === upload.id ? 'bg-accent' : ''
+                          }`}
+                        >
+                          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium text-xs">{upload.fileName}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[11px] text-muted-foreground">
+                                {formatFileSize(upload.fileSize)}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {upload.uploadedAt ? format(new Date(upload.uploadedAt), 'MMM d') : 'N/A'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <Badge className={`text-[10px] shrink-0 ${st.cls}`}>{st.label}</Badge>
-                      </button>
+                          <Badge className={`text-[10px] shrink-0 ${st.cls}`}>{st.label}</Badge>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(upload.id); }}
+                          className="shrink-0 p-2 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          title="Delete this upload"
+                          aria-label="Delete upload"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -255,10 +326,10 @@ export function AIResearch() {
       </div>
 
       {/* Right Panel */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
         {error && <ErrorState message={error} onRetry={loadUploads} />}
 
-        {!result && !isLoadingResult && !error && (
+        {!selectedUpload && !error && (
           <EmptyState
             icon={<Inbox className="h-12 w-12 text-muted-foreground" />}
             title="Upload a PDF to get started"
@@ -279,32 +350,33 @@ export function AIResearch() {
           </Card>
         )}
 
-        {result && !isLoadingResult && (
-          <Card className="h-full">
-            <CardHeader>
+        {result && !isLoadingResult && selectedUpload && (
+          <Card className="flex-1 min-h-0">
+            <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-ai" />
                 <CardTitle className="text-lg">Research Analysis</CardTitle>
               </div>
-              {selectedUpload && (
-                <p className="text-sm text-muted-foreground">{selectedUpload.fileName}</p>
-              )}
+              <p className="text-sm text-muted-foreground">{selectedUpload.fileName}</p>
             </CardHeader>
-            <CardContent className="pb-6">
-              <ScrollArea className="max-h-[calc(100vh-14rem)] custom-scrollbar">
-                <Tabs defaultValue="summary">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
-                    <TabsTrigger value="findings">Key Findings</TabsTrigger>
-                    <TabsTrigger value="gaps">Research Gaps</TabsTrigger>
-                    <TabsTrigger value="future">Future Work</TabsTrigger>
-                  </TabsList>
+            <CardContent className="pb-4">
+              <Tabs defaultValue="summary">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="summary">Summary</TabsTrigger>
+                  <TabsTrigger value="findings">Key Findings</TabsTrigger>
+                  <TabsTrigger value="gaps">Research Gaps</TabsTrigger>
+                  <TabsTrigger value="future">Future Work</TabsTrigger>
+                  <TabsTrigger value="chat">Q&A Chat</TabsTrigger>
+                </TabsList>
 
-                  <TabsContent value="summary" className="mt-0">
+                <TabsContent value="summary" className="mt-0">
+                  <ScrollArea className="max-h-[calc(100vh-22rem)] custom-scrollbar">
                     <p className="text-sm leading-relaxed text-foreground/90">{result.summary}</p>
-                  </TabsContent>
+                  </ScrollArea>
+                </TabsContent>
 
-                  <TabsContent value="findings" className="mt-0">
+                <TabsContent value="findings" className="mt-0">
+                  <ScrollArea className="max-h-[calc(100vh-22rem)] custom-scrollbar">
                     <ul className="space-y-2">
                       {result.keyFindings.map((finding, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -313,9 +385,11 @@ export function AIResearch() {
                         </li>
                       ))}
                     </ul>
-                  </TabsContent>
+                  </ScrollArea>
+                </TabsContent>
 
-                  <TabsContent value="gaps" className="mt-0">
+                <TabsContent value="gaps" className="mt-0">
+                  <ScrollArea className="max-h-[calc(100vh-22rem)] custom-scrollbar">
                     <ul className="space-y-2">
                       {result.researchGaps.map((gap, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -324,9 +398,11 @@ export function AIResearch() {
                         </li>
                       ))}
                     </ul>
-                  </TabsContent>
+                  </ScrollArea>
+                </TabsContent>
 
-                  <TabsContent value="future" className="mt-0">
+                <TabsContent value="future" className="mt-0">
+                  <ScrollArea className="max-h-[calc(100vh-22rem)] custom-scrollbar">
                     <ul className="space-y-2">
                       {result.futureWork.map((work, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -335,16 +411,70 @@ export function AIResearch() {
                         </li>
                       ))}
                     </ul>
-                  </TabsContent>
-                </Tabs>
+                  </ScrollArea>
+                </TabsContent>
 
-                <Separator className="my-6" />
+                <TabsContent value="chat" className="mt-0">
+                  <div className="flex flex-col h-[calc(100vh-26rem)]">
+                    <ScrollArea className="flex-1 pr-2 custom-scrollbar">
+                      {chatMessages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                          <p>Ask a question about this document</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 py-2">
+                          {chatMessages.map(msg => (
+                            <div
+                              key={msg.id}
+                              className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
+                            >
+                              {msg.role === 'assistant' && (
+                                <div className="h-8 w-8 rounded-full bg-ai/10 flex items-center justify-center shrink-0">
+                                  <Bot className="h-4 w-4 text-ai" />
+                                </div>
+                              )}
+                              <div
+                                className={`rounded-lg px-4 py-2.5 max-w-[80%] text-sm ${
+                                  msg.role === 'user'
+                                    ? 'bg-ai text-white'
+                                    : 'bg-muted'
+                                }`}
+                              >
+                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                              </div>
+                              {msg.role === 'user' && (
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <User className="h-4 w-4 text-primary" />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          <div ref={chatEndRef} />
+                        </div>
+                      )}
+                    </ScrollArea>
 
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Methodology</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{result.methodology}</p>
-                </div>
-              </ScrollArea>
+                    <div className="flex gap-2 pt-3 border-t mt-3">
+                      <Textarea
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={handleChatKeyDown}
+                        placeholder="Ask a question about this document..."
+                        className="min-h-[44px] max-h-[120px] resize-none text-sm"
+                        rows={1}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleSendChat}
+                        disabled={!chatInput.trim() || isChatting}
+                        className="shrink-0 h-[44px] w-[44px]"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}

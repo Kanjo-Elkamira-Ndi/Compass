@@ -123,6 +123,7 @@ public class ResearchAssistantService {
                 .keyFindings(keyFindings)
                 .researchGaps(researchGaps)
                 .futureWork(futureWork)
+                .extractedText(text)
                 .build();
         analysis = researchAnalysisRepository.save(analysis);
 
@@ -135,6 +136,59 @@ public class ResearchAssistantService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResearchAnalysisResponse getById(UUID analysisId, UUID userId) {
+        ResearchAnalysis analysis = findOwned(analysisId, userId);
+        return toResponse(analysis);
+    }
+
+    @Transactional
+    public String chatAboutDocument(UUID analysisId, UUID userId, String question) {
+        ResearchAnalysis analysis = findOwned(analysisId, userId);
+        String docText = analysis.getExtractedText();
+
+        if (docText == null || docText.isBlank()) {
+            return "No document text available for this analysis.";
+        }
+
+        String systemPrompt = """
+                You are a research document assistant. Answer the user's question
+                based solely on the content of the provided document. If the answer
+                cannot be found in the document, say so clearly.
+                """;
+
+        String userMessage = String.format("""
+                Document text:
+                %s
+
+                Question: %s
+
+                Answer based only on the document above.
+                """, docText, question);
+
+        try {
+            return aiProvider.chat(systemPrompt, userMessage);
+        } catch (Exception e) {
+            log.warn("AI provider unavailable for document chat: {}", e.getMessage());
+            return "AI analysis is currently unavailable. Please try again later.";
+        }
+    }
+
+    @Transactional
+    public void deleteAnalysis(UUID analysisId, UUID userId) {
+        ResearchAnalysis analysis = findOwned(analysisId, userId);
+        researchAnalysisRepository.delete(analysis);
+    }
+
+    private ResearchAnalysis findOwned(UUID analysisId, UUID userId) {
+        ResearchAnalysis analysis = researchAnalysisRepository.findById(analysisId)
+                .orElseThrow(() -> new RuntimeException("Analysis not found"));
+        if (!analysis.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Access denied");
+        }
+        return analysis;
     }
 
     private String extractText(MultipartFile file) throws IOException {
@@ -163,6 +217,7 @@ public class ResearchAssistantService {
                 .keyFindings(analysis.getKeyFindings() != null ? analysis.getKeyFindings() : List.of())
                 .researchGaps(analysis.getResearchGaps() != null ? analysis.getResearchGaps() : List.of())
                 .futureWork(analysis.getFutureWork() != null ? analysis.getFutureWork() : List.of())
+                .extractedText(analysis.getExtractedText())
                 .createdAt(analysis.getCreatedAt())
                 .build();
     }
