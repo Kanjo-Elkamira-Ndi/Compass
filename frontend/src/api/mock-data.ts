@@ -121,7 +121,7 @@ export const mockGPATrends: Record<string, GPATrend[]> = {
 };
 
 // ===================== Risk Assessments =====================
-const makeFactors = (overrides: Partial<RiskFactor>[] = []): RiskFactor[] => [
+const makeFactors = (overrides: RiskFactor[] = []): RiskFactor[] => [
   { name: 'GPA Trend', value: 75, weight: 0.3, status: 'good', description: 'Your GPA has been steadily improving over the past 3 semesters.' },
   { name: 'Course Completion Rate', value: 90, weight: 0.25, status: 'good', description: 'You have completed 90% of enrolled courses successfully.' },
   { name: 'Attendance', value: 85, weight: 0.2, status: 'good', description: 'Your attendance rate is above the recommended threshold.' },

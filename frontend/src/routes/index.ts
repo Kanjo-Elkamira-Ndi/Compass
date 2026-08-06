@@ -23,4 +23,7 @@ export const ROUTES = {
   ADMIN_USERS: "/admin/users",
   ADMIN_COURSES: "/admin/courses",
   ADMIN_RAG: "/admin/rag",
+  STUDENT_COMPLAINTS: "/student/complaints",
+  LECTURER_COMPLAINTS: "/lecturer/complaints",
+  ADMIN_COMPLAINTS: "/admin/complaints",
 } as const;

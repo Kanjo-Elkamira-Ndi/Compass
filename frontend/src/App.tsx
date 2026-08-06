@@ -29,6 +29,8 @@ import { AICareer } from "@/pages/ai/CareerPage";
 import { AdminUsers } from "@/pages/admin/AdminUsersPage";
 import { AdminCourses } from "@/pages/admin/AdminCoursesPage";
 import { AdminRAGDocs } from "@/pages/admin/AdminRagPage";
+import { ComplaintsListPage } from "@/pages/complaints/ComplaintsListPage";
+import { ComplaintDetailPage } from "@/pages/complaints/ComplaintDetailPage";
 
 export default function App() {
   return (
@@ -69,6 +71,12 @@ export default function App() {
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/courses" element={<AdminCourses />} />
                 <Route path="/admin/rag" element={<AdminRAGDocs />} />
+                <Route path="/student/complaints" element={<ComplaintsListPage role="STUDENT" />} />
+                <Route path="/student/complaints/:id" element={<ComplaintDetailPage role="STUDENT" />} />
+                <Route path="/lecturer/complaints" element={<ComplaintsListPage role="LECTURER" />} />
+                <Route path="/lecturer/complaints/:id" element={<ComplaintDetailPage role="LECTURER" />} />
+                <Route path="/admin/complaints" element={<ComplaintsListPage role="ADMIN" />} />
+                <Route path="/admin/complaints/:id" element={<ComplaintDetailPage role="ADMIN" />} />
               </Route>
             </Route>
 

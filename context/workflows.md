@@ -25,6 +25,12 @@ Full stack (mirrors production containers): `docker compose up --build`.
 | `GEMINI_API_KEY` | spring-api | Fallback AI provider |
 | `REDIS_URL` | spring-api | `redis://redis-cache:6379` |
 | `VITE_API_BASE_URL` | react-app (build-time) | `http://localhost:8080/api/v1` in dev |
+| `COMPLAINT_UPLOAD_DIR` | spring-api | Where complaint attachments are stored on disk; maps to `app.complaints.upload-dir`, default `./uploads/complaints` |
+
+> The `spring.servlet.multipart` `max-file-size` is set to `10MB` in the
+> local `application.yml` (gitignored). Complaint uploads are additionally
+> capped at 5 files × 10MB each in `ComplaintServiceImpl` — see
+> `api-reference.md` §Student complaint portal.
 
 ## Git and PR conventions
 

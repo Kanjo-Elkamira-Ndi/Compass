@@ -10,7 +10,7 @@ import type {
 } from '@/types';
 
 // Create Axios instance with base URL
-const api = axios.create({
+export const api = axios.create({
   baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ export async function getStudentDashboard(studentId: string): Promise<ApiRespons
       enrollments: [],
       riskAssessment: {
         studentId,
-        level: 'PASSING',
+        level: 'Passing',
         score: 0.5,
         factors: [],
         recommendedActions: [],
@@ -131,9 +131,14 @@ export async function getStudentCourses(studentId: string): Promise<ApiResponse<
       id: e.courseId,
       code: e.courseCode || '',
       name: e.courseName || '',
+      description: e.description || '',
       credits: e.credits || 3,
-      programme: e.programme || '',
+      lecturerId: e.lecturerId || '',
       lecturerName: e.lecturerName || '',
+      semester: e.semester || '',
+      programme: e.programme || '',
+      enrolledCount: e.enrolledCount ?? 0,
+      maxCapacity: e.maxCapacity ?? 0,
     },
     studentId: e.studentId,
     enrolledAt: e.enrolmentDate || e.createdAt,
@@ -178,7 +183,7 @@ export async function getRiskAssessment(studentId: string): Promise<ApiResponse<
       success: true,
       data: {
         studentId,
-        level: 'PASSING',
+        level: 'Passing',
         score: 0.5,
         factors: [],
         recommendedActions: [],
@@ -197,7 +202,7 @@ export async function runRiskAssessment(studentId: string): Promise<ApiResponse<
       success: true,
       data: {
         studentId,
-        level: 'PASSING',
+        level: 'Passing',
         score: 0.5,
         factors: [],
         recommendedActions: [],
@@ -281,6 +286,7 @@ export async function uploadResearchDocument(file: File): Promise<ApiResponse<Re
         keyFindings: analysis.keyFindings || [],
         researchGaps: analysis.researchGaps || [],
         futureWork: analysis.futureWork || [],
+        methodology: analysis.methodology || '',
       } : undefined,
     },
   };
@@ -374,7 +380,18 @@ export async function submitGrade(studentId: string, courseId: string, gradeLett
 export async function getAdminUsers(): Promise<ApiResponse<AdminUser[]>> {
   const { data } = await api.get('/students');
   const users = data.data?.content || data.data || [];
-  return { success: true, data: users };
+  return {
+    success: true,
+    data: (Array.isArray(users) ? users : []).map((s: any) => ({
+      id: s.id,
+      name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim() || s.email || '',
+      email: s.email ?? '',
+      role: 'STUDENT',
+      programme: s.programme ?? '',
+      status: 'active',
+      createdAt: s.createdAt || new Date().toISOString(),
+    })),
+  };
 }
 
 export async function createUser(userData: { name: string; email: string; role: Role; programme?: string }): Promise<ApiResponse<AdminUser>> {

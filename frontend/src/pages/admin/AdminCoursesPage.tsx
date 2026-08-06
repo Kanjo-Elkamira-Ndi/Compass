@@ -91,7 +91,7 @@ export function AdminCourses() {
   }, [fetchData]);
 
   const filteredCourses = courses.filter(c =>
-    (c.title || c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (c.code || '').toLowerCase().includes(search.toLowerCase()) ||
     (c.programme || '').toLowerCase().includes(search.toLowerCase())
   );
@@ -142,7 +142,6 @@ export function AdminCourses() {
         const res = await createCourse({
           ...data,
           lecturerName: lecturers.find(l => l.id === data.lecturerId)?.name || '',
-          enrolledCount: 0,
         });
         setCourses(prev => [res.data, ...prev]);
         toast.success('Course created successfully.');

@@ -33,6 +33,12 @@ entity mappings, it never modifies it).
 | `Student` → `CareerRecommendation` | 1:N | Latest set is current; history retained. |
 | `DocumentChunk` | — | Standalone RAG embeddings, no FK — documents are university-wide. |
 | **`leads`** (public site) | — | Standalone, **no FK to `users`** — a visitor filling the contact form hasn't registered yet. |
+| `Student` → `Complaint` | 1:N | Filed by the student; `assigned_to` (lecturer) nullable until assigned. |
+| `Complaint` → `ComplaintReply` | 1:N | Conversation thread, oldest first. |
+| `Complaint` → `ComplaintAttachment` | 1:N | Files stored on disk under `app.complaints.upload-dir`; the row holds metadata + storage key. |
+| `Complaint` → `ComplaintStatusHistory` | 1:N | Audit trail of status transitions. |
+| `User` → `ComplaintReply` / `ComplaintStatusHistory` | 1:N | Via `author_id` / `changed_by`. |
+| `User` → `Notification` | 1:N | In-app notifications, strictly user-scoped. |
 
 ## Table definitions
 
@@ -173,6 +179,75 @@ scheduled job).
 | status | VARCHAR(20) | NOT NULL DEFAULT 'NEW' | CHECK IN ('NEW','CONTACTED','CONVERTED') |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 
+### `complaints` (student complaint portal — see `api-reference.md`)
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | `gen_random_uuid()` |
+| student_id | UUID | FK → students(id) NOT NULL | Filing student; always stored even when anonymous |
+| subject | VARCHAR(200) | NOT NULL | |
+| description | TEXT | NOT NULL | |
+| category | VARCHAR(30) | NOT NULL | CHECK IN ('ACADEMIC','ADMINISTRATIVE','EXAMINATION','FACILITY','FINANCIAL','HARASSMENT','OTHER') |
+| priority | VARCHAR(10) | NOT NULL DEFAULT 'MEDIUM' | CHECK IN ('LOW','MEDIUM','HIGH','URGENT') |
+| status | VARCHAR(15) | NOT NULL DEFAULT 'SUBMITTED' | CHECK IN ('SUBMITTED','ASSIGNED','IN_PROGRESS','RESOLVED','CLOSED') |
+| is_anonymous | BOOLEAN | NOT NULL DEFAULT FALSE | Masks the filer in API responses |
+| assigned_to | UUID | FK → lecturers(id) NULL | Nullable until assigned |
+| resolution | TEXT | NULL | Required when moving to RESOLVED |
+| created_at / updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | updated_at managed via JPA `@UpdateTimestamp` |
+
+> Indexes: `idx_complaints_student (student_id, created_at DESC)`,
+> `idx_complaints_assigned (assigned_to, status)`,
+> `idx_complaints_status (status, created_at DESC)`.
+
+### `complaint_replies`
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | |
+| complaint_id | UUID | FK → complaints(id) ON DELETE CASCADE | |
+| author_id | UUID | FK → users(id) NOT NULL | Any role may author a reply |
+| message | TEXT | NOT NULL | Max 5000 chars |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+
+> Index: `idx_complaint_replies_complaint (complaint_id, created_at ASC)`.
+
+### `complaint_attachments`
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | |
+| complaint_id | UUID | FK → complaints(id) ON DELETE CASCADE | |
+| file_name | VARCHAR(255) | NOT NULL | |
+| content_type | VARCHAR(100) | NOT NULL | |
+| file_size | BIGINT | NOT NULL | Bytes |
+| storage_key | VARCHAR(255) | NOT NULL | Path relative to `app.complaints.upload-dir` |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+
+> Index: `idx_complaint_attachments_complaint (complaint_id)`.
+
+### `complaint_status_history`
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | |
+| complaint_id | UUID | FK → complaints(id) ON DELETE CASCADE | |
+| from_status | VARCHAR(15) | NULL | NULL on the first record (→ SUBMITTED) |
+| to_status | VARCHAR(15) | NOT NULL | |
+| changed_by | UUID | FK → users(id) NOT NULL | |
+| changed_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+
+> Index: `idx_complaint_history_complaint (complaint_id, changed_at ASC)`.
+
+### `notifications` (in-app — see `api-reference.md` §Notifications)
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | |
+| user_id | UUID | FK → users(id) NOT NULL | Recipient; strictly user-scoped |
+| type | VARCHAR(30) | NOT NULL | `NotificationType` enum: COMPLAINT_SUBMITTED / COMPLAINT_ASSIGNED / COMPLAINT_REPLIED / COMPLAINT_RESOLVED |
+| title | VARCHAR(200) | NOT NULL | |
+| body | TEXT | NOT NULL | |
+| link | VARCHAR(255) | NULL | Frontend route, e.g. `/student/complaints/{id}` |
+| is_read | BOOLEAN | NOT NULL DEFAULT FALSE | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+
+> Index: `idx_notifications_user (user_id, is_read, created_at DESC)`.
+
 ## Flyway migration sequence
 
 | File | Description |
@@ -181,6 +256,12 @@ scheduled job).
 | V9__create_security.sql | `revoked_tokens`, `password_reset_tokens` |
 | V10__seed_admin.sql | Bootstrap admin user, reference data for programmes |
 | **V11__create_leads.sql** | Public website `leads` table (additive, no dependency on core schema) |
+| V12__enable_text_search_for_rag.sql | RAG switches to PostgreSQL full-text search: `search_vector` tsvector with GIN index; `embedding` no longer NOT NULL |
+| V13__drop_vector_type_for_rag.sql | `document_chunks.embedding` converted from vector(1536) to text |
+| V14__restore_vector_type.sql | `embedding` restored as vector(384) (all-MiniLM-L6-v2) with IVFFlat index |
+| V15__revert_vector_to_text.sql | Final state: `embedding` reverted to text, full-text search |
+| **V16__create_complaint_module.sql** | Complaint portal: `complaints`, `complaint_replies`, `complaint_attachments`, `complaint_status_history` |
+| **V17__create_notifications.sql** | In-app `notifications` table (complaint portal events, future modules) |
 
 When adding a new migration: next sequential `V{n}__description.sql`,
 never edit a migration that has already run in any shared environment.

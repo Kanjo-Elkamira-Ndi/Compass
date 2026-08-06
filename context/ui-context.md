@@ -64,6 +64,12 @@ these exist to convert a visitor into a registered account, see
 | `/admin/users` | ADMIN | `AdminUsersPage` — user list, create/edit/deactivate |
 | `/admin/courses` | ADMIN | `AdminCoursesPage` — course CRUD, assign lecturer, timetable generator |
 | `/admin/rag` | ADMIN | `AdminRagPage` — upload university documents, view indexed chunks |
+| `/student/complaints` | STUDENT | `ComplaintsListPage` — own complaints, filters (search/status/category/priority), new-complaint dialog |
+| `/student/complaints/:id` | STUDENT | `ComplaintDetailPage` — thread, attachments, status history, reply |
+| `/lecturer/complaints` | LECTURER | `ComplaintsListPage` — only assigned complaints |
+| `/lecturer/complaints/:id` | LECTURER | `ComplaintDetailPage` — reply, AI-suggested reply, update status |
+| `/admin/complaints` | ADMIN | `ComplaintsListPage` — all complaints, assign lecturers |
+| `/admin/complaints/:id` | ADMIN | `ComplaintDetailPage` — assign, update status, resolution |
 
 ## shadcn/ui primitives in use
 
@@ -75,7 +81,8 @@ Install only what's actually used — don't `add` the full catalogue.
 integration), `select`, `textarea`, `dialog`, `sheet` (mobile sidebar),
 `badge`, `alert`, `avatar`, `dropdown-menu`, `tabs`, `accordion` (FAQ
 page), `table`, `skeleton` (loading states), `separator`, `toast`
-(`sonner`, shadcn's recommended toast).
+(`sonner`, shadcn's recommended toast), `checkbox` (complaint form
+anonymous toggle), `popover` + `scroll-area` (notification bell).
 
 ## Component inventory
 
@@ -88,7 +95,7 @@ page), `table`, `skeleton` (loading states), `separator`, `toast`
 | `<ContactForm>` | `Form` + `Input` + `Textarea` + `Select` + `Button`, react-hook-form + zod schema | Name, email, role-interest selector, message, honeypot field. Posts to `/api/v1/public/contact`. |
 | `<PublicFooter>` | `Separator` + plain Tailwind layout | Site-wide footer: institution details, quick links, contact info. |
 | `<AppShell>` | `Sheet` (mobile) / fixed sidebar (desktop) + `Avatar` + `DropdownMenu` | Persistent authenticated layout: sidebar (role-aware links), top app bar (avatar + logout), main content area. |
-| `<ProtectedRoute>` | — (logic only, no UI) | Wraps React Router routes. Checks auth context → redirect to `/login`; checks role → 403 page. |
+| `<ProtectedRoute>` | — (logic only, no UI) | Wraps React Router routes. Checks auth context → redirect to `/login`; checks role → 403 page. Matches paths by prefix (`pathMatches`) so detail routes like `/student/complaints/:id` inherit their list route's role. |
 | `<GpaTrendChart>` | `recharts` inside a `Card` | Line chart. Props: `{ data: {semester: string, gpa: number}[] }`. |
 | `<RiskBadge>` | `Badge` with a `cva` variant per level | Colour from `RiskLevel`: EXCELLENT=`success`, PASSING=`secondary`, AT_RISK=`warning`, CRITICAL=`destructive`. |
 | `<ChatInterface>` | `ScrollArea` + `Input` + `Button` | Scrollable message list, input + send. Role-labelled bubbles (USER=right, ASSISTANT=left). Shows RAG citation if present. |
@@ -96,6 +103,14 @@ page), `table`, `skeleton` (loading states), `separator`, `toast`
 | `<CareerRecommendationCard>` | `Card` + `Badge` list | Career title, demand `Badge`, rationale, skills-to-develop `Badge`s, certifications list. |
 | `<PdfUploadDropzone>` | `react-dropzone` inside a dashed-border `Card` | PDF-only. Shows filename/size, upload progress (`Progress`). |
 | `<ApiErrorAlert>` | `Alert` (`variant="destructive"`) or `sonner` toast | Renders Axios error responses. Maps `errorCode` → friendly message. Auto-dismiss after 8s. |
+| `<ComplaintsListPage>` | `Table` + `Select` filters + `Dialog` | Role-aware list (`role` prop: STUDENT/LECTURER/ADMIN) — filters search/status/category/priority, paginated; STUDENT gets a "New complaint" action opening `<ComplaintForm>`. |
+| `<ComplaintDetailPage>` | `Card` + `Badge`s + `ReplyComposer` | Role-aware detail (`role` prop) — subject, description, status/priority `Badge`s, replies thread, `AttachmentList`, status history; ADMIN/LECTURER get status controls and the AI suggest-reply button. |
+| `<ComplaintForm>` | `Dialog` + `Form` + `Input` + `Textarea` + `Select` + `Checkbox` + file input | New-complaint dialog: subject, description, category, priority, anonymous checkbox, up to 5 file attachments. POSTs `multipart/form-data` to `/api/v1/complaints`. |
+| `<ReplyComposer>` | `Textarea` + `Button` | Reply box on the detail page; disabled once the complaint is CLOSED. |
+| `<AttachmentList>` | `Button`/link list | Lists attachments; each opens `GET /api/v1/complaints/{id}/attachments/{attachmentId}` (filename + size). |
+| `<ComplaintStatusBadge>` | `Badge` + style map | Colour from `ComplaintStatus`: SUBMITTED=muted, ASSIGNED=primary, IN_PROGRESS=ai, RESOLVED=success, CLOSED=secondary. Labels from `lib/complaint-labels.ts`. |
+| `<ComplaintPriorityBadge>` | `Badge` + style map | Colour from `ComplaintPriority`: LOW=muted, MEDIUM=primary, HIGH=warning, URGENT=destructive. |
+| `<NotificationBell>` | `Popover` + `Badge` + `ScrollArea` + lucide icons | Top-bar bell in `<AppShell>`: unread-count badge (polled every 30s), dropdown list, per-type icons, mark-one/mark-all-read, navigates to the notification's `link` on click. |
 
 ## Rule for agents
 

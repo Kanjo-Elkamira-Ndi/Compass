@@ -18,7 +18,14 @@ const PROTECTED_ROUTES: Record<string, Role[]> = {
   "/admin/users": ["ADMIN"],
   "/admin/courses": ["ADMIN"],
   "/admin/rag": ["ADMIN"],
+  "/student/complaints": ["STUDENT"],
+  "/lecturer/complaints": ["LECTURER"],
+  "/admin/complaints": ["ADMIN"],
 };
+
+function pathMatches(pathname: string, route: string): boolean {
+  return pathname === route || pathname.startsWith(route + "/");
+}
 
 function getDefaultDashboard(role: Role | undefined): string {
   switch (role) {
@@ -42,7 +49,8 @@ export default function ProtectedRoute() {
   }
 
   const userRole = user.role as Role | undefined;
-  const allowedRoles = PROTECTED_ROUTES[location.pathname];
+  const matchedRoute = Object.keys(PROTECTED_ROUTES).find((route) => pathMatches(location.pathname, route));
+  const allowedRoles = matchedRoute ? PROTECTED_ROUTES[matchedRoute] : undefined;
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
     return <Navigate to={getDefaultDashboard(userRole)} replace />;
   }

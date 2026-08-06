@@ -56,7 +56,7 @@ public class ComplaintServiceImpl implements IComplaintService {
     private final ComplaintStatusHistoryMapper historyMapper;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Value("${app.complaints.upload-dir}")
+    @Value("${app.complaints.upload-dir:./uploads/complaints}")
     private String uploadDir;
 
     @Override
