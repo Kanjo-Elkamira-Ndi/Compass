@@ -25,7 +25,7 @@ com.yibs.advisor
 ├── AdvisorApplication.java              # @SpringBootApplication
 │
 ├── domain.user/                         # User (abstract), Student, Lecturer, Admin, Role, UserStatus
-├── domain.course/                       # Course, Enrolment, TimetableSlot
+├── domain.course/                       # Course, Enrolment, TimetableSlot, LecturerAvailability ← new
 ├── domain.performance/                  # GradeRecord, PerformanceSummary, GpaResult (record)
 ├── domain.ai/                           # RiskAssessment, ChatMessage, ResearchAnalysis, Exam,
 │                                         # ExamQuestion, CareerRecommendation, DocumentChunk
@@ -33,28 +33,36 @@ com.yibs.advisor
 │
 ├── service.student/                     # IStudentService, StudentServiceImpl
 ├── service.course/                      # ICourseService, CourseServiceImpl
-├── service.performance/                 # IPerformanceService, PerformanceServiceImpl
+├── service.timetable/                   # ITimetableService, TimetableServiceImpl ← new:
+│                                         #   lecturer availability CRUD + greedy timetable generator
+├── service.performance/                 # IPerformanceService, PerformanceServiceImpl,
+│                                         # ITranscriptService, TranscriptServiceImpl
+│                                         # (HMAC-signed transcript authenticity tokens)
 ├── service.ai/                          # IAIService, ChatbotServiceImpl, RiskServiceImpl,
-│                                         # ResearchServiceImpl, ExamServiceImpl, CareerServiceImpl
+│                                         # ResearchServiceImpl, ExamServiceImpl, CareerServiceImpl,
+│                                         # CourseRecommendationService  ← new: career-goal course ranking
 ├── service.ai.provider/                 # AIProviderStrategy, OpenAiProviderImpl,
 │                                         # GeminiProviderImpl, PromptBuilder
 ├── service.ai.rag/                      # RagIngestionService, RagQueryService
 ├── service.publicsite/                  # PublicStatsService, LeadService  ← new
 │
 ├── controller/                          # AuthController, StudentController, CourseController,
-│                                         # PerformanceController, AIController, AdminController,
+│                                         # TimetableController ← new, PerformanceController,
+│                                         # AIController, AdminController,
 │                                         # PublicController  ← new
 │
 ├── dto.request/                         # RegisterRequest, LoginRequest, CreateStudentRequest,
 │                                         # EnrolRequest, GradeSubmissionRequest, ExamRequest,
 │                                         # ChatRequest, ContactRequest, NewsletterRequest ← new
 ├── dto.response/                        # StudentResponse, CourseResponse, GpaResponse,
-│                                         # RiskResponse, PublicStatsResponse ← new, ApiResponse<T>
+│                                         # RiskResponse, PublicStatsResponse ← new, ApiResponse<T>,
+│                                         # TranscriptTokenResponse, TranscriptVerificationResponse ← new
 │
 ├── repository/                          # UserRepository, StudentRepository, CourseRepository,
 │                                         # EnrolmentRepository, GradeRepository,
 │                                         # RiskAssessmentRepository, RevokedTokenRepository,
-│                                         # DocumentChunkRepository, LeadRepository  ← new
+│                                         # LecturerAvailabilityRepository ← new, DocumentChunkRepository,
+│                                         # LeadRepository  ← new
 │
 ├── mapper/                              # StudentMapper, CourseMapper, GradeMapper, RiskMapper
 │                                         # (MapStruct @Mapper interfaces)
@@ -98,12 +106,16 @@ src/
 │   │   ├── FeaturesPage.tsx
 │   │   ├── AboutPage.tsx
 │   │   ├── FaqPage.tsx
-│   │   └── ContactPage.tsx
+│   │   ├── ContactPage.tsx
+│   │   └── VerifyTranscriptPage.tsx     # ← new: scans transcript QR → public verify
 │   ├── auth/                            # LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage
 │   ├── student/                         # StudentDashboard, StudentCoursesPage, StudentResultsPage, StudentProfilePage
-│   ├── lecturer/                        # LecturerDashboard, LecturerStudentsPage, LecturerCoursesPage
-│   ├── ai/                              # AIChatPage, RiskPage, CareerPage, ResearchPage, ExamGeneratorPage
-│   └── admin/                           # AdminUsersPage, AdminCoursesPage, AdminRagPage
+│   ├── lecturer/                        # LecturerDashboard, LecturerStudentsPage, LecturerCoursesPage,
+│                                         # LecturerAvailabilityPage ← new
+│   ├── ai/                              # AIChatPage, RiskPage, CareerPage,
+│                                         # CourseRecommendationPage ← new, ResearchPage, ExamGeneratorPage
+│   └── admin/                           # AdminUsersPage, AdminCoursesPage, AdminTimetablePage ← new,
+│                                         # AdminRagPage
 │
 ├── components/
 │   ├── ui/                              # shadcn/ui primitives (generated via shadcn CLI, then
@@ -119,6 +131,7 @@ src/
 │   ├── ExamQuestionEditor.tsx
 │   ├── CareerRecommendationCard.tsx
 │   ├── PdfUploadDropzone.tsx
+│   ├── timetable/WeeklyTimetable.tsx   # ← new: shared weekly grid (admin/lecturer/student views)
 │   └── ApiErrorAlert.tsx
 │
 ├── api/                                 # Axios instance + one module per resource
@@ -127,7 +140,9 @@ src/
 │   └── public.ts                        # ← new: /api/v1/public/* calls
 │
 ├── lib/
-│   └── utils.ts                         # cn() (clsx + tailwind-merge) — shadcn's standard helper
+│   ├── utils.ts                         # cn() (clsx + tailwind-merge) — shadcn's standard helper
+│   └── transcript-pdf.ts                # ← new: client-side PDF generation (jsPDF + autoTable)
+│                                        #   + QR authenticity code (qrcode) for the transcript
 ├── routes/                              # route constants — single source of truth for paths
 └── types/                               # shared TS types/interfaces mirroring backend DTOs
 ```

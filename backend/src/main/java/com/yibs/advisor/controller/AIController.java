@@ -7,11 +7,13 @@ import com.yibs.advisor.dto.response.ApiResponse;
 import com.yibs.advisor.dto.response.CareerRecommendationResponse;
 import com.yibs.advisor.dto.response.ChatHistoryResponse;
 import com.yibs.advisor.dto.response.ChatResponse;
+import com.yibs.advisor.dto.response.CourseRecommendationResponse;
 import com.yibs.advisor.dto.response.ExamQuestionResponse;
 import com.yibs.advisor.dto.response.ExamResponse;
 import com.yibs.advisor.dto.response.ResearchAnalysisResponse;
 import com.yibs.advisor.dto.response.RiskAssessmentResponse;
 import com.yibs.advisor.service.ai.CareerRecommendationService;
+import com.yibs.advisor.service.ai.CourseRecommendationService;
 import com.yibs.advisor.service.ai.ExamGeneratorService;
 import com.yibs.advisor.service.ai.ResearchAssistantService;
 import com.yibs.advisor.service.ai.RiskAssessmentService;
@@ -41,6 +43,7 @@ public class AIController {
     private final ResearchAssistantService researchAssistantService;
     private final ExamGeneratorService examGeneratorService;
     private final CareerRecommendationService careerRecommendationService;
+    private final CourseRecommendationService courseRecommendationService;
 
     // ─── Chat ───────────────────────────────────────────────
     @PostMapping("/chat")
@@ -138,6 +141,17 @@ public class AIController {
             Authentication authentication) {
         UUID studentId = UUID.fromString(authentication.getName());
         List<CareerRecommendationResponse> recommendations = careerRecommendationService.getRecommendations(studentId);
+        return ResponseEntity.ok(ApiResponse.ok(recommendations));
+    }
+
+    // ─── Course Recommendations ────────────────────────────
+    @GetMapping("/course-recommendations")
+    public ResponseEntity<ApiResponse<List<CourseRecommendationResponse>>> getCourseRecommendations(
+            @RequestParam(value = "careerGoal", required = false) String careerGoal,
+            Authentication authentication) {
+        UUID studentId = UUID.fromString(authentication.getName());
+        List<CourseRecommendationResponse> recommendations =
+                courseRecommendationService.recommendCourses(studentId, careerGoal);
         return ResponseEntity.ok(ApiResponse.ok(recommendations));
     }
 }

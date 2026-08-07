@@ -13,8 +13,8 @@ import {
 import { LoadingState, ErrorState, EmptyState, getRiskLevelColor, getRiskLevelDot } from '@/components/shared/states';
 import { useAuth } from '@/contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { getLecturerDashboard, runRiskAssessment } from '@/api/client';
-import type { LecturerDashboard as LecturerDashboardType } from '@/types';
+import { getLecturerDashboard, getTimetable, runRiskAssessment } from '@/api/client';
+import type { LecturerDashboard as LecturerDashboardType, LecturerTimetable } from '@/types';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Loader2,
   UserCheck,
+  Clock,
 } from 'lucide-react';
 
 export function LecturerDashboard() {
@@ -32,6 +33,7 @@ export function LecturerDashboard() {
   const [state, setState] = useState<'loading' | 'error' | 'data'>('loading');
   const [error, setError] = useState('');
   const [dashboard, setDashboard] = useState<LecturerDashboardType | null>(null);
+  const [timetable, setTimetable] = useState<LecturerTimetable[]>([]);
   const [assessingId, setAssessingId] = useState<string | null>(null);
 
   const retryDashboard = async () => {
@@ -60,6 +62,11 @@ export function LecturerDashboard() {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard.');
         setState('error');
       }
+    });
+    getTimetable().then(res => {
+      if (!cancelled) setTimetable(res.data);
+    }).catch(() => {
+      // Schedule is optional on the dashboard — hide on failure
     });
     return () => { cancelled = true; };
   }, [user]);
@@ -243,6 +250,52 @@ export function LecturerDashboard() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* My Schedule */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="size-4 text-muted-foreground" />
+              My Schedule
+            </CardTitle>
+            <CardDescription>Your assigned courses and time slots</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/lecturer/courses')}>
+            View Full Timetable
+            <ArrowRight className="ml-1 size-3.5" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {timetable.length === 0 ? (
+            <EmptyState
+              icon={<Clock className="size-12 text-muted-foreground" />}
+              title="No Timetable Yet"
+              description="The admin hasn't generated a timetable yet. Once generated, your teaching schedule will appear here."
+            />
+          ) : (
+            <div className="space-y-2">
+              {timetable.map((day) =>
+                day.slots.map((slot) => (
+                  <div
+                    key={`${day.day}-${slot.time}-${slot.courseCode}`}
+                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-20 shrink-0 text-xs font-medium text-muted-foreground">{day.day}</div>
+                      <div className="text-sm font-mono">{slot.time}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{slot.courseCode}</Badge>
+                      <span className="hidden sm:block text-sm text-muted-foreground">{slot.courseName}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </CardContent>

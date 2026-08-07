@@ -21,6 +21,7 @@ Full stack (mirrors production containers): `docker compose up --build`.
 | `DB_URL` | spring-api | `jdbc:postgresql://postgres-db:5432/advisor` |
 | `DB_USER` / `DB_PASSWORD` | spring-api | Never committed; `.env` only |
 | `JWT_SECRET` | spring-api | ≥256-bit, different per environment — see `security.md` |
+| `TRANSCRIPT_SIGNING_SECRET` | spring-api | ≥256-bit, different per environment — signs transcript authenticity tokens (HMAC-SHA256), see `security.md` |
 | `OPENAI_API_KEY` | spring-api | Primary AI provider |
 | `GEMINI_API_KEY` | spring-api | Fallback AI provider |
 | `REDIS_URL` | spring-api | `redis://redis-cache:6379` |

@@ -45,24 +45,28 @@ these exist to convert a visitor into a registered account, see
 | `/about` | Public | `AboutPage` — institution context (YIBS), programme background |
 | `/faq` | Public | `FaqPage` — accordion of common questions |
 | `/contact` | Public | `ContactPage` — enquiry form, posts to `/api/v1/public/contact` |
+| `/verify-transcript` | Public | `VerifyTranscriptPage` — reads `?token=` and calls `GET /api/v1/public/transcripts/verify`; confirms authenticity of a scanned transcript QR code |
 | `/login` | Public | `LoginPage` — email/password, link to forgot-password |
 | `/register` | Public | `RegisterPage` — name, email, password, role selector |
 | `/forgot-password` | Public | `ForgotPasswordPage` |
 | `/reset-password/:token` | Public | `ResetPasswordPage` |
-| `/student/dashboard` | STUDENT | `StudentDashboard` — GPA trend chart, enrolments, risk badge, quick actions |
-| `/student/courses` | STUDENT | `StudentCoursesPage` — available courses, enrol/drop |
-| `/student/results` | STUDENT | `StudentResultsPage` — grade records, GPA/CGPA per semester |
+| `/student/results` | STUDENT | `StudentResultsPage` — grade records, GPA/CGPA per semester, "Download Transcript" button (jsPDF + QR authenticity code → `/verify-transcript`) |
 | `/student/profile` | STUDENT | `StudentProfilePage` — editable name and skills list |
-| `/lecturer/dashboard` | LECTURER | `LecturerDashboard` — assigned courses, at-risk alerts, quick exam button |
+| `/student/dashboard` | STUDENT | `StudentDashboard` — GPA trend chart, enrolments, risk badge, **full weekly timetable** (from `/timetable`), quick actions |
+| `/student/courses` | STUDENT | `StudentCoursesPage` — available courses, enrol/drop |
+| `/lecturer/dashboard` | LECTURER | `LecturerDashboard` — assigned courses, at-risk alerts, **My Schedule** (lecturer's own slots from `/timetable`), quick exam button |
 | `/lecturer/students` | LECTURER | `LecturerStudentsPage` — student list, grade entry, risk trigger |
-| `/lecturer/courses` | LECTURER | `LecturerCoursesPage` — assigned courses, timetable view |
+| `/lecturer/courses` | LECTURER | `LecturerCoursesPage` — per-course student roster (name, student ID, programme, year) from `/courses/{courseId}/students` + full timetable view (own slots via `WeeklyTimetable`) |
+| `/lecturer/availability` | LECTURER | `LecturerAvailabilityPage` — checkbox grid of DOW × time slots, saved as availability for the admin timetable generator |
 | `/ai/chat` | STUDENT | `AIChatPage` — chat UI, session history, RAG source citation |
 | `/ai/risk` | STUDENT | `RiskPage` — risk classification, factors, recommended actions |
 | `/ai/career` | STUDENT | `CareerPage` — ranked career cards, skills gap, certifications |
+| `/ai/courses` | STUDENT | `CourseRecommendationPage` — career-goal selector, ranked course recommendations with match scores, rationale, aligned skills, inline Enroll |
 | `/ai/research` | STUDENT/LECTURER | `ResearchPage` — PDF drag-drop, structured analysis, history |
 | `/ai/exam-generator` | LECTURER | `ExamGeneratorPage` — topic/difficulty/count form, question editor |
 | `/admin/users` | ADMIN | `AdminUsersPage` — user list, create/edit/deactivate |
-| `/admin/courses` | ADMIN | `AdminCoursesPage` — course CRUD, assign lecturer, timetable generator |
+| `/admin/courses` | ADMIN | `AdminCoursesPage` — course CRUD, assign lecturer |
+| `/admin/timetable` | ADMIN | `AdminTimetablePage` — lecturer coverage table, course-assignment table, **Generate Timetable** button, generated result banner, `WeeklyTimetable` preview |
 | `/admin/rag` | ADMIN | `AdminRagPage` — upload university documents, view indexed chunks |
 
 ## shadcn/ui primitives in use

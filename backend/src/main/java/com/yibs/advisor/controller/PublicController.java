@@ -6,7 +6,9 @@ import com.yibs.advisor.dto.request.ContactRequest;
 import com.yibs.advisor.dto.request.NewsletterRequest;
 import com.yibs.advisor.dto.response.ApiResponse;
 import com.yibs.advisor.dto.response.PublicStatsResponse;
+import com.yibs.advisor.dto.response.TranscriptVerificationResponse;
 import com.yibs.advisor.repository.LeadRepository;
+import com.yibs.advisor.service.performance.ITranscriptService;
 import com.yibs.advisor.service.publicsite.PublicStatsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +23,19 @@ public class PublicController {
 
     private final PublicStatsService publicStatsService;
     private final LeadRepository leadRepository;
+    private final ITranscriptService transcriptService;
 
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<PublicStatsResponse>> getStats() {
         PublicStatsResponse stats = publicStatsService.getStats();
         return ResponseEntity.ok(ApiResponse.ok(stats));
+    }
+
+    @GetMapping("/transcripts/verify")
+    public ResponseEntity<ApiResponse<TranscriptVerificationResponse>> verifyTranscript(
+            @RequestParam String token) {
+        TranscriptVerificationResponse response = transcriptService.verifyToken(token);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @PostMapping("/contact")

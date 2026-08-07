@@ -76,8 +76,18 @@ entity mappings, it never modifies it).
 | semester | SMALLINT | NOT NULL CHECK (1–2) | |
 | academic_year | VARCHAR(9) | NOT NULL | e.g. 2025-2026 |
 | lecturer_id | UUID | FK → lecturers(id) NULL | Nullable until assigned |
-| timetable_slot | VARCHAR(50) | NULL | e.g. MON-09:00-11:00 |
+| timetable_slot | VARCHAR(50) | NULL | Set by admin timetable generation: `DAY-SLOT`, e.g. `MONDAY-08:00-09:00` |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'OPEN' | CHECK IN ('OPEN','CLOSED') |
+
+### `lecturer_availability`
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| id | UUID | PK | |
+| lecturer_id | UUID | FK → lecturers(id) ON DELETE CASCADE | |
+| day_of_week | VARCHAR(20) | NOT NULL | Uppercase, e.g. `MONDAY` |
+| slot | VARCHAR(20) | NOT NULL | Compact range, e.g. `08:00-09:00` |
+| created_at / updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| — | — | UNIQUE (lecturer_id, day_of_week, slot) | No duplicate availability entries |
 
 ### `enrolments`
 | Column | Type | Constraints | Notes |
@@ -181,6 +191,9 @@ scheduled job).
 | V9__create_security.sql | `revoked_tokens`, `password_reset_tokens` |
 | V10__seed_admin.sql | Bootstrap admin user, reference data for programmes |
 | **V11__create_leads.sql** | Public website `leads` table (additive, no dependency on core schema) |
+| V12–V15 | RAG embedding storage experiments (vector type enable/drop/restore/revert-to-text) |
+| **V16__create_lecturer_availability.sql** | Lecturer availability input for timetable generation |
+| **V17__seed_demo_data.sql** | Fresh-dev-DB demo seed: 4 lecturers, 10 students, 10 courses (2025-2026 sem 1, with timetable slots + matching availability), 28 ENROLLED enrolments, 32 grade records + 16 performance summaries (2024-2025 history), 5 risk assessments, 3 career recommendations. Fixes the V10 admin password hash. Fixed UUIDs, so only apply on a fresh DB. |
 
 When adding a new migration: next sequential `V{n}__description.sql`,
 never edit a migration that has already run in any shared environment.

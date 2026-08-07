@@ -44,6 +44,7 @@ export interface Course {
   programme: string;
   enrolledCount: number;
   maxCapacity: number;
+  timetableSlot?: string;
 }
 
 export interface Enrollment {
@@ -54,6 +55,15 @@ export interface Enrollment {
   enrolledAt: string;
   grade?: string;
   gpaPoints?: number;
+}
+
+export interface Student {
+  id: string;
+  studentId: string;
+  name: string;
+  email?: string;
+  programme: string;
+  yearOfStudy?: number;
 }
 
 // ===================== Grades & GPA =====================
@@ -182,10 +192,26 @@ export interface CareerRecommendation {
   growthRate: string;
 }
 
+// ===================== Course Recommendations =====================
+export interface CourseRecommendation {
+  rank: number;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  credits: number;
+  semester: number;
+  academicYear: string;
+  matchScore: number;
+  rationale: string;
+  alignedSkills: string[];
+}
+
 // ===================== Admin =====================
 export interface AdminUser {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: Role;
   programme?: string;
@@ -240,8 +266,29 @@ export interface TimetableSlot {
   time: string;
   courseCode: string;
   courseName: string;
+  lecturerName?: string;
+  programme?: string;
+  semester?: number;
   room: string;
   type: 'lecture' | 'lab' | 'tutorial';
+}
+
+// ===================== Timetable / Availability =====================
+export interface AvailabilitySlot {
+  day: string;
+  slot: string;
+}
+
+export interface LecturerAvailabilityGroup {
+  lecturerId: string;
+  lecturerName: string;
+  slots: AvailabilitySlot[];
+}
+
+export interface GenerateTimetableResult {
+  scheduled: number;
+  skipped: string[];
+  generatedAt: string;
 }
 
 // ===================== Contact =====================
@@ -251,6 +298,31 @@ export interface ContactFormData {
   roleInterest: 'Student' | 'Lecturer' | 'Partner';
   message: string;
   honeypot?: string;
+}
+
+// ===================== Transcript verification =====================
+export interface TranscriptVerifiedData {
+  studentName: string;
+  studentIdCode: string;
+  programme: string;
+  cgpa: number;
+  credits: number;
+  gradeCount: number;
+  issuedAt: string;
+  expiresAt: string;
+}
+
+export interface TranscriptToken {
+  token: string;
+  issuedAt: string;
+  expiresAt: string;
+  data: TranscriptVerifiedData;
+}
+
+export interface TranscriptVerification {
+  valid: boolean;
+  reason?: string;
+  data?: TranscriptVerifiedData;
 }
 
 // ===================== API Response wrapper =====================

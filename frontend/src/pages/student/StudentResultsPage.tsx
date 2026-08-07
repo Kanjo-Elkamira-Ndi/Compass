@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
@@ -12,9 +13,12 @@ import {
 } from '@/components/ui/table';
 import { LoadingState, ErrorState, EmptyState } from '@/components/shared/states';
 import { useAuth } from '@/contexts/auth-context';
-import { getGradeRecords } from '@/api/client';
+import { getGradeRecords, issueTranscriptToken } from '@/api/client';
+import { generateTranscriptPdf } from '@/lib/transcript-pdf';
+import { ROUTES } from '@/routes';
 import type { GradeRecord } from '@/types';
-import { TrendingUp, CreditCard, BookOpen, Award } from 'lucide-react';
+import { toast } from 'sonner';
+import { TrendingUp, CreditCard, BookOpen, Award, Download } from 'lucide-react';
 
 const semesters = ['All', '2024-2', '2024-1', '2023-2', '2023-1', '2022-2'];
 
@@ -31,6 +35,25 @@ export function StudentResults() {
   const [error, setError] = useState('');
   const [grades, setGrades] = useState<GradeRecord[]>([]);
   const [semesterFilter, setSemesterFilter] = useState<string>('All');
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadTranscript = async () => {
+    if (!user || grades.length === 0) return;
+    setDownloading(true);
+    try {
+      const transcript = await issueTranscriptToken(user.id);
+      const verificationUrl = new URL(
+        `${ROUTES.VERIFY_TRANSCRIPT}?token=${encodeURIComponent(transcript.token)}`,
+        window.location.origin,
+      ).href;
+      await generateTranscriptPdf({ token: transcript, grades, verificationUrl });
+      toast.success('Transcript downloaded');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate transcript.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const loadGrades = async () => {
     setState('loading');
@@ -117,12 +140,22 @@ export function StudentResults() {
 
       {/* Filter */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="size-5 text-primary" />
-            Academic Results
-          </CardTitle>
-          <CardDescription>Your grade records across all semesters</CardDescription>
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="size-5 text-primary" />
+              Academic Results
+            </CardTitle>
+            <CardDescription>Your grade records across all semesters</CardDescription>
+          </div>
+          <Button
+            onClick={handleDownloadTranscript}
+            disabled={downloading || grades.length === 0}
+            aria-label="Download transcript"
+          >
+            <Download className="size-4 mr-2" />
+            {downloading ? 'Generating…' : 'Download Transcript'}
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
