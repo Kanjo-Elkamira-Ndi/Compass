@@ -42,7 +42,9 @@ hardcoded, never committed, different per environment.
 | 6 | `JwtAuthFilter` (before `UsernamePasswordAuthFilter`) | Extracts Bearer token, validates signature+expiry, sets `SecurityContext` |
 | 7 | `hasRole('ADMIN')` for `/api/v1/admin/**` | Only ADMIN |
 | 8 | `hasAnyRole('ADMIN','LECTURER')` for `/performance/ranking` | Students cannot see cohort ranking |
-| 9 | Authenticated for all other `/api/v1/**` | Valid token grants base access; service layer enforces own-data rules |
+| 9 | `/timetable/availability/me` + `/timetable/availability` + `/timetable/generate` | LECTURERs read/overwrite only their own availability; ADMIN-only for the full availability view and the generate action. `/timetable` returns all slots to STUDENT/ADMIN but only the caller's slots to LECTURER |
+| 10 | `/courses/lecturer/{id}` + `/courses/{courseId}/students` | Roster data is ADMIN or LECTURER-own scoped: a LECTURER can only list their own courses and the students of courses they teach |
+| 11 | Authenticated for all other `/api/v1/**` | Valid token grants base access; service layer enforces own-data rules |
 
 ## Password security
 
@@ -63,6 +65,7 @@ hardcoded, never committed, different per environment.
 | No secrets in logs | JWT secrets, API keys, password hashes excluded via custom `PatternLayout` exclusion rules |
 | HTTPS only in production | Nginx terminates TLS; Spring trusts `X-Forwarded-Proto`, redirects HTTP → HTTPS |
 | Rate limiting on AI endpoints | Bucket4j: 20 AI requests/min/user |
+| Transcript authenticity signing | `GET /performance/students/{id}/transcript-token` signs the payload with HMAC-SHA256 using `TRANSCRIPT_SIGNING_SECRET` (≥256-bit, from env, never hardcoded). Tokens carry a 90-day TTL. Any edit to the payload breaks the signature → `verify` returns `tampered` |
 
 ## Public endpoint exposure and abuse protection
 
@@ -81,6 +84,11 @@ purpose — so it gets its own hardening on top of rule 5 above:
   Redis-cached summary object refreshed on a schedule; it never queries
   per-user tables directly, so landing-page traffic can't load the core
   academic database.
+- **Stateless transcript verification:** `/public/transcripts/verify` only
+  re-computes an HMAC and compares timestamps — it performs no DB work, so
+  it can't amplify traffic into the academic database. Invalid/expired
+  tokens return `200 {valid:false}` rather than 4xx, so nothing is logged
+  as an error for a scanned/expired QR.
 
 ## When adding a new endpoint or role check
 

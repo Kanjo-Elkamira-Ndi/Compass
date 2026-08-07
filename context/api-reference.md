@@ -39,15 +39,59 @@ Entities are **never** returned directly — always via DTOs (see
 
 ## Course management — `/courses/*`
 
-Create, assign lecturer, enrol, drop, generate timetable — mirrors the
-module list in `project-overview.md`. Auth required for all; write
-operations are ADMIN/LECTURER, enrol/drop is STUDENT(own).
+Create, assign lecturer, enrol, drop — mirrors the module list in
+`project-overview.md`. Auth required for all; write operations are
+ADMIN/LECTURER, enrol/drop is STUDENT(own).
+
+| Method | Path | Description | Auth | Roles |
+|---|---|---|---|---|
+| GET | /courses | List courses (paginated, filterable) | Yes | All |
+| GET | /courses/{id} | Get course by ID | Yes | All |
+| POST | /courses | Create course | Yes | ADMIN/LECTURER |
+| PUT | /courses/{id} | Update course | Yes | ADMIN/LECTURER |
+| POST | /courses/{courseId}/enrol | Enrol the calling student | Yes | STUDENT(own) |
+| POST | /courses/{courseId}/drop | Drop the calling student | Yes | STUDENT(own) |
+| GET | /courses/lecturer/{lecturerId} | Courses assigned to a lecturer (with enrolled counts) | Yes | ADMIN or LECTURER(own) |
+| GET | /courses/{courseId}/students | Enrolled students (ENROLLED only, sorted by name) for a course | Yes | ADMIN or LECTURER teaching that course |
+
+Roster endpoints enforce ownership in the controller: a LECTURER can only
+fetch their own courses and students of courses they teach — a cross-course
+request returns `403 ACCESS_DENIED`.
+
+## Timetable & availability — `/timetable/*`
+
+Timetable generation is a deterministic greedy scheduler: it clears all
+existing `timetable_slot` values, then assigns only OPEN courses that have
+a lecturer, respecting the lecturer's declared availability plus
+lecturer-busy and cohort (programme+semester) conflicts per slot.
+
+| Method | Path | Description | Auth | Roles |
+|---|---|---|---|---|
+| GET | /timetable | Full weekly timetable (students/admins). With `?lecturerId=`, returns only that lecturer's slots | Yes | STUDENT/ADMIN/LECTURER |
+| GET | /timetable/availability/me | The current lecturer's declared availability | Yes | LECTURER |
+| PUT | /timetable/availability/me | Replace the current lecturer's availability (full replace; day normalised to uppercase) | Yes | LECTURER |
+| GET | /timetable/availability | All lecturers' availability grouped by lecturer | Yes | ADMIN |
+| POST | /timetable/generate | Generate the timetable from assigned courses + availability; returns `{scheduled, skipped, generatedAt}` | Yes | ADMIN |
 
 ## Academic performance — `/performance/*`
 
 GPA, CGPA, cohort ranking, performance trends. `/performance/ranking` is
 `hasAnyRole('ADMIN','LECTURER')` — students cannot see cohort ranking
 (see `security.md` §Filter Chain rule 7).
+
+| Method | Path | Description | Auth | Roles |
+|---|---|---|---|---|
+| POST | /performance/grades | Submit a grade record | Yes | ADMIN/LECTURER |
+| GET | /performance/students/{studentId}/summary | GPA/CGPA summary | Yes | All (own/ADMIN/LECTURER) |
+| GET | /performance/students/{studentId}/grades | Grade records | Yes | All (own/ADMIN/LECTURER) |
+| GET | /performance/students/{studentId}/transcript-token | Issue a signed transcript verification token (embedded as a QR code in the downloadable transcript) | Yes | STUDENT(own)/ADMIN/LECTURER |
+| GET | /performance/ranking | Cohort ranking | Yes | ADMIN/LECTURER |
+
+The token is `base64url(payload) + "." + HMAC-SHA256(secret, payload)`.
+`TranscriptTokenResponse` also returns the `data` block that the public
+verify endpoint will reproduce, so the PDF is generated from
+server-authoritative summary data. Students can only request their own
+token — a cross-account attempt returns `403 ACCESS_DENIED`.
 
 ## AI modules — `/ai/*`
 
@@ -62,6 +106,7 @@ GPA, CGPA, cohort ranking, performance trends. `/performance/ranking` is
 | POST | /ai/exam-generator | Generate exam questions (`{topic, difficulty, count, types}`) | Yes | LECTURER |
 | POST | /ai/exams | Save finalised exam | Yes | LECTURER |
 | GET | /ai/career-recommendations | Get/regenerate career recommendations | Yes | STUDENT(own) |
+| GET | /ai/course-recommendations | Personalized course recommendations from the student's programme (open, not-yet-enrolled courses) ranked against a career goal (`?careerGoal=` optional; defaults to the student's top career recommendation) | Yes | STUDENT(own) |
 | POST | /admin/rag/upload | Upload university PDF to RAG knowledge base | Yes | ADMIN |
 
 ## Public website endpoints — `/public/*`
@@ -72,6 +117,7 @@ See `architecture.md` §Public Website Architecture and `security.md`
 | Method | Path | Description | Auth | Roles |
 |---|---|---|---|---|
 | GET | /public/stats | Aggregate counters (active students, courses offered, AI queries answered) for the landing page "by the numbers" section — served from a Redis-cached summary, never queries per-user tables directly | No | Public |
+| GET | /public/transcripts/verify | Verify a transcript authenticity token (`?token=...`). Stateless HMAC recomputation — never queries the DB. Always returns 200 with `{valid, reason, data}`; `reason` is `missing`/`malformed`/`tampered`/`expired` | No | Public |
 | POST | /public/contact | Submit contact/enquiry form → writes to `leads`, triggers admin notification email | No | Public (rate-limited, 5 req/min/IP) |
 | POST | /public/newsletter | Subscribe an email → writes to `leads` with `source='newsletter'` | No | Public (rate-limited, 5 req/min/IP) |
 

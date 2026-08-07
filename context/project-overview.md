@@ -45,8 +45,9 @@ Universities manage thousands of students who constantly need guidance on:
 6. **AI Module 3 — Research Assistant** — student uploads a PDF; AI returns summary, key findings, research gaps, future work.
 7. **AI Module 4 — Automatic Exam Generator** — lecturer specifies topic/difficulty/count; AI generates MCQ, theory, practical, and case-study questions.
 8. **AI Module 5 — Career Recommendation Engine** — ranks career paths from the student's courses, projects, skills, and grades.
-9. **Public Marketing Website** — unauthenticated landing page, feature/about/FAQ/contact pages, lead capture, and the on-ramp into registration. See `architecture.md` §Public Website Architecture and `ui-context.md` §Route Map.
-10. **Bonus — RAG knowledge base** — university handbook, regulations, research policies, and course catalog are ingested so the chatbot can answer from official documents rather than general internet knowledge.
+9. **AI Module 6 — Personalized Course Recommendations** — ranks the student's open, not-yet-enrolled courses against their career goal (defaults to the top career recommendation); powers "based on your career goal" advising.
+10. **Public Marketing Website** — unauthenticated landing page, feature/about/FAQ/contact pages, lead capture, and the on-ramp into registration. See `architecture.md` §Public Website Architecture and `ui-context.md` §Route Map.
+11. **Bonus — RAG knowledge base** — university handbook, regulations, research policies, and course catalog are ingested so the chatbot can answer from official documents rather than general internet knowledge.
 
 ## Technology stack
 

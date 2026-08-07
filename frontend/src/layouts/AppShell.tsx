@@ -10,6 +10,8 @@ import {
   ShieldAlert,
   FileSearch,
   Briefcase,
+  GraduationCap,
+  CalendarClock,
   Users,
   Calendar,
   FileText,
@@ -55,12 +57,14 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Risk Assessment", path: "/ai/risk", icon: ShieldAlert },
   { label: "Research Assistant", path: "/ai/research", icon: FileSearch },
   { label: "Career Advisor", path: "/ai/career", icon: Briefcase },
+  { label: "Course Advisor", path: "/ai/courses", icon: GraduationCap },
 ];
 
 const LECTURER_NAV: NavItem[] = [
   { label: "Dashboard", path: "/lecturer/dashboard", icon: LayoutDashboard },
   { label: "Students", path: "/lecturer/students", icon: Users },
   { label: "Courses", path: "/lecturer/courses", icon: BookOpen },
+  { label: "Availability", path: "/lecturer/availability", icon: CalendarClock },
   { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
   { label: "Exam Generator", path: "/ai/exam-generator", icon: FileText },
 ];
@@ -68,6 +72,7 @@ const LECTURER_NAV: NavItem[] = [
 const ADMIN_NAV: NavItem[] = [
   { label: "Users", path: "/admin/users", icon: Users },
   { label: "Courses", path: "/admin/courses", icon: BookOpen },
+  { label: "Timetable", path: "/admin/timetable", icon: CalendarClock },
   { label: "RAG Documents", path: "/admin/rag", icon: Database },
 ];
 

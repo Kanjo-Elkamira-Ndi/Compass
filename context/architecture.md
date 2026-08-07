@@ -32,7 +32,8 @@ without an interface it implements (`IXxxService`).
 |---|---|---|
 | `AuthController` | `@RestController` | `/api/v1/auth/*` — register, login, refresh, logout, forgot/reset password |
 | `StudentController` | `@RestController` | `/api/v1/students/*` — CRUD, search, pagination |
-| `CourseController` | `@RestController` | `/api/v1/courses/*` — CRUD, enrol, drop, timetable |
+| `CourseController` | `@RestController` | `/api/v1/courses/*` — CRUD, enrol, drop, lecturer courses, per-course student roster (LECTURER own-course scoped) |
+| `TimetableController` | `@RestController` | `/api/v1/timetable/*` — availability (lecturer), all availability + generate (admin), full/lecturer timetable |
 | `PerformanceController` | `@RestController` | `/api/v1/performance/*` — GPA, CGPA, ranking, trends |
 | `AIController` | `@RestController` | `/api/v1/ai/*` — routes to all five AI service components |
 | `AdminController` | `@RestController` | `/api/v1/admin/*` — user management, RAG document upload |
@@ -40,13 +41,15 @@ without an interface it implements (`IXxxService`).
 | `JwtAuthFilter` | `@Component` | Extends `OncePerRequestFilter`; validates Bearer token, loads `UserDetails`, sets `SecurityContext` |
 | `JwtTokenProvider` | `@Component` | Signs/validates/parses JWT access + refresh tokens via `jjwt` |
 | `StudentService` | `@Service` | Implements `IStudentService`; CRUD + search via MapStruct DTO mapping |
-| `CourseService` | `@Service` | Implements `ICourseService`; enforces enrolment business rules |
+| `CourseService` | `@Service` | Implements `ICourseService`; enforces enrolment business rules; lecturer course listing with enrolled counts; enrolled-student roster (ENROLLED only, sorted by name) |
+| `TimetableService` | `@Service` | Implements `ITimetableService`; CRUD on `LecturerAvailability`, greedy deterministic timetable generator (respects lecturer availability + lecturer-busy + cohort conflicts), lecturer-scoped queries |
 | `PerformanceService` | `@Service` | GPA/CGPA via Streams; ranking via `Comparator`; persists `PerformanceSummary` |
 | `ChatbotService` | `@Service` | Builds `ChatClient` prompts; manages session history; invokes RAG if enabled |
 | `RiskAssessmentService` | `@Service` | Aggregates grade components, calls AI provider, maps score → `RiskLevel` |
 | `ResearchAssistantService` | `@Service` | Accepts PDF multipart, extracts text via PDFBox, builds structured analysis prompt |
 | `ExamGeneratorService` | `@Service` | Builds typed exam prompt, parses JSON → `List<ExamQuestion>` |
 | `CareerRecommendationService` | `@Service` | Builds student profile object, submits to AI, parses ranked career list |
+| `CourseRecommendationService` | `@Service` | Resolves the student's career goal (explicit or top career match), ranks the programme's open, un-enrolled courses against it via AI, filters hallucinated codes, returns ranked `CourseRecommendationResponse` list |
 | `RagIngestionService` | `@Service` | Chunks PDFs, generates embeddings via OpenAI, stores in pgvector via `PgVectorStore` |
 | `GlobalExceptionHandler` | `@RestControllerAdvice` | Catches custom exceptions, returns structured `ErrorResponse`, never leaks stack traces |
 

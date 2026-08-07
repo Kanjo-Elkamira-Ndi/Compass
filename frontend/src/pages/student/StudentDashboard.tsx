@@ -20,15 +20,17 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { LoadingState, ErrorState, getRiskLevelColor, getRiskLevelDot } from '@/components/shared/states';
+import { WeeklyTimetable } from '@/components/timetable/WeeklyTimetable';
 import { useAuth } from '@/contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { getStudentDashboard } from '@/api/client';
-import type { StudentDashboard as StudentDashboardType } from '@/types';
+import { getStudentDashboard, getTimetable } from '@/api/client';
+import type { StudentDashboard as StudentDashboardType, LecturerTimetable } from '@/types';
 import {
   MessageSquare,
   ShieldAlert,
   FlaskConical,
   Briefcase,
+  GraduationCap,
   BookOpen,
   TrendingUp,
   ArrowRight,
@@ -63,6 +65,7 @@ export function StudentDashboard() {
   const [state, setState] = useState<'loading' | 'error' | 'data'>('loading');
   const [error, setError] = useState('');
   const [dashboard, setDashboard] = useState<StudentDashboardType | null>(null);
+  const [timetable, setTimetable] = useState<LecturerTimetable[]>([]);
 
   const retryDashboard = async () => {
     setState('loading');
@@ -90,6 +93,11 @@ export function StudentDashboard() {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard.');
         setState('error');
       }
+    });
+    getTimetable().then(res => {
+      if (!cancelled) setTimetable(res.data);
+    }).catch(() => {
+      // Timetable is optional on the dashboard — hide on failure
     });
     return () => { cancelled = true; };
   }, [user]);
@@ -123,6 +131,12 @@ export function StudentDashboard() {
       title: 'Career Advisor',
       description: 'Get career recommendations based on your profile.',
       route: '/ai/career',
+    },
+    {
+      icon: <GraduationCap className="size-5 text-secondary" />,
+      title: 'Course Advisor',
+      description: 'Get course recommendations aligned with your career goal.',
+      route: '/ai/courses',
     },
   ];
 
@@ -274,6 +288,13 @@ export function StudentDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Weekly Timetable */}
+      <WeeklyTimetable
+        timetable={timetable}
+        title="Weekly Timetable"
+        description="Complete timetable for the current semester"
+      />
 
       {/* Quick Action Cards */}
       <div>

@@ -4,6 +4,7 @@ import com.yibs.advisor.dto.request.CreateCourseRequest;
 import com.yibs.advisor.dto.response.ApiResponse;
 import com.yibs.advisor.dto.response.CourseResponse;
 import com.yibs.advisor.dto.response.EnrolmentResponse;
+import com.yibs.advisor.dto.response.StudentResponse;
 import com.yibs.advisor.service.course.ICourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -81,5 +84,35 @@ public class CourseController {
         UUID studentId = UUID.fromString(authentication.getName());
         EnrolmentResponse enrolment = courseService.dropCourse(courseId, studentId);
         return ResponseEntity.ok(ApiResponse.ok("Course dropped successfully", enrolment));
+    }
+
+    @GetMapping("/lecturer/{lecturerId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ResponseEntity<ApiResponse<List<CourseResponse>>> listLecturerCourses(
+            @PathVariable UUID lecturerId,
+            Authentication authentication) {
+        if (!isAdmin(authentication) && !lecturerId.equals(UUID.fromString(authentication.getName()))) {
+            throw new AccessDeniedException("You can only view your own courses");
+        }
+        return ResponseEntity.ok(ApiResponse.ok(courseService.listLecturerCourses(lecturerId)));
+    }
+
+    @GetMapping("/{courseId}/students")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ResponseEntity<ApiResponse<List<StudentResponse>>> listEnrolledStudents(
+            @PathVariable UUID courseId,
+            Authentication authentication) {
+        CourseResponse course = courseService.getCourseById(courseId);
+        if (!isAdmin(authentication)
+                && (course.getLecturerId() == null
+                    || !course.getLecturerId().equals(UUID.fromString(authentication.getName())))) {
+            throw new AccessDeniedException("You can only view students in courses you teach");
+        }
+        return ResponseEntity.ok(ApiResponse.ok(courseService.listEnrolledStudents(courseId)));
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }

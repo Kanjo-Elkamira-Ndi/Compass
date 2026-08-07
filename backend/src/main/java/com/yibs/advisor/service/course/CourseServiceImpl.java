@@ -6,9 +6,11 @@ import com.yibs.advisor.domain.user.Student;
 import com.yibs.advisor.dto.request.CreateCourseRequest;
 import com.yibs.advisor.dto.response.CourseResponse;
 import com.yibs.advisor.dto.response.EnrolmentResponse;
+import com.yibs.advisor.dto.response.StudentResponse;
 import com.yibs.advisor.exception.StudentNotFoundException;
 import com.yibs.advisor.mapper.CourseMapper;
 import com.yibs.advisor.mapper.EnrolmentMapper;
+import com.yibs.advisor.mapper.StudentMapper;
 import com.yibs.advisor.repository.CourseRepository;
 import com.yibs.advisor.repository.EnrolmentRepository;
 import com.yibs.advisor.repository.LecturerRepository;
@@ -19,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,6 +35,7 @@ public class CourseServiceImpl implements ICourseService {
     private final LecturerRepository lecturerRepository;
     private final CourseMapper courseMapper;
     private final EnrolmentMapper enrolmentMapper;
+    private final StudentMapper studentMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -129,5 +134,29 @@ public class CourseServiceImpl implements ICourseService {
         enrolment.setStatus(EnrolmentStatus.DROPPED);
         enrolment = enrolmentRepository.save(enrolment);
         return enrolmentMapper.toResponse(enrolment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseResponse> listLecturerCourses(UUID lecturerId) {
+        return courseRepository.findByLecturerId(lecturerId).stream()
+                .map(course -> {
+                    CourseResponse response = courseMapper.toResponse(course);
+                    response.setEnrolledCount(enrolmentRepository.findByCourseId(course.getId()).size());
+                    return response;
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> listEnrolledStudents(UUID courseId) {
+        return enrolmentRepository.findByCourseId(courseId).stream()
+                .filter(enrolment -> enrolment.getStatus() == EnrolmentStatus.ENROLLED)
+                .map(Enrolment::getStudent)
+                .sorted(Comparator.comparing(Student::getLastName)
+                        .thenComparing(Student::getFirstName))
+                .map(studentMapper::toResponse)
+                .toList();
     }
 }

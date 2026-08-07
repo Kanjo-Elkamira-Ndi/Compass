@@ -10,6 +10,7 @@ import { FeaturesPage } from "@/pages/public/FeaturesPage";
 import { AboutPage } from "@/pages/public/AboutPage";
 import { FAQPage } from "@/pages/public/FaqPage";
 import { ContactPage } from "@/pages/public/ContactPage";
+import { VerifyTranscriptPage } from "@/pages/public/VerifyTranscriptPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
@@ -21,14 +22,17 @@ import { StudentProfile } from "@/pages/student/StudentProfilePage";
 import { LecturerDashboard } from "@/pages/lecturer/LecturerDashboard";
 import { LecturerStudents } from "@/pages/lecturer/LecturerStudentsPage";
 import { LecturerCourses } from "@/pages/lecturer/LecturerCoursesPage";
+import { LecturerAvailability } from "@/pages/lecturer/LecturerAvailabilityPage";
 import { AIChat } from "@/pages/ai/AIChatPage";
 import { AIRisk } from "@/pages/ai/RiskPage";
 import { AIResearch } from "@/pages/ai/ResearchPage";
 import { AIExamGenerator } from "@/pages/ai/ExamGeneratorPage";
 import { AICareer } from "@/pages/ai/CareerPage";
+import { AICourseRecommendation } from "@/pages/ai/CourseRecommendationPage";
 import { AdminUsers } from "@/pages/admin/AdminUsersPage";
 import { AdminCourses } from "@/pages/admin/AdminCoursesPage";
 import { AdminRAGDocs } from "@/pages/admin/AdminRagPage";
+import { AdminTimetable } from "@/pages/admin/AdminTimetablePage";
 
 export default function App() {
   return (
@@ -43,6 +47,7 @@ export default function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/verify-transcript" element={<VerifyTranscriptPage />} />
             </Route>
 
             {/* Auth pages (standalone, no layout wrapper) */}
@@ -61,14 +66,17 @@ export default function App() {
                 <Route path="/lecturer/dashboard" element={<LecturerDashboard />} />
                 <Route path="/lecturer/students" element={<LecturerStudents />} />
                 <Route path="/lecturer/courses" element={<LecturerCourses />} />
+                <Route path="/lecturer/availability" element={<LecturerAvailability />} />
                 <Route path="/ai/chat" element={<AIChat />} />
                 <Route path="/ai/risk" element={<AIRisk />} />
                 <Route path="/ai/research" element={<AIResearch />} />
                 <Route path="/ai/exam-generator" element={<AIExamGenerator />} />
                 <Route path="/ai/career" element={<AICareer />} />
+                <Route path="/ai/courses" element={<AICourseRecommendation />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/courses" element={<AdminCourses />} />
                 <Route path="/admin/rag" element={<AdminRAGDocs />} />
+                <Route path="/admin/timetable" element={<AdminTimetable />} />
               </Route>
             </Route>
 

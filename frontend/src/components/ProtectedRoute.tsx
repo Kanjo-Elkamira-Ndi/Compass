@@ -10,14 +10,17 @@ const PROTECTED_ROUTES: Record<string, Role[]> = {
   "/lecturer/dashboard": ["LECTURER"],
   "/lecturer/students": ["LECTURER"],
   "/lecturer/courses": ["LECTURER"],
+  "/lecturer/availability": ["LECTURER"],
   "/ai/chat": ["STUDENT", "LECTURER"],
   "/ai/risk": ["STUDENT"],
   "/ai/research": ["STUDENT"],
   "/ai/exam-generator": ["LECTURER"],
   "/ai/career": ["STUDENT"],
+  "/ai/courses": ["STUDENT"],
   "/admin/users": ["ADMIN"],
   "/admin/courses": ["ADMIN"],
   "/admin/rag": ["ADMIN"],
+  "/admin/timetable": ["ADMIN"],
 };
 
 function getDefaultDashboard(role: Role | undefined): string {
