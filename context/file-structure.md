@@ -30,6 +30,10 @@ com.yibs.advisor
 ├── domain.ai/                           # RiskAssessment, ChatMessage, ResearchAnalysis, Exam,
 │                                         # ExamQuestion, CareerRecommendation, DocumentChunk
 ├── domain.publicsite/                   # Lead  ← new: backs the public marketing site
+├── domain.complaint/                    # Complaint, ComplaintReply, ComplaintAttachment,
+│                                         # ComplaintStatusHistory + ComplaintCategory,
+│                                         # ComplaintPriority, ComplaintStatus enums
+├── domain.notification/                 # Notification, NotificationType
 │
 ├── service.student/                     # IStudentService, StudentServiceImpl
 ├── service.course/                      # ICourseService, CourseServiceImpl
@@ -45,26 +49,42 @@ com.yibs.advisor
 │                                         # GeminiProviderImpl, PromptBuilder
 ├── service.ai.rag/                      # RagIngestionService, RagQueryService
 ├── service.publicsite/                  # PublicStatsService, LeadService  ← new
+├── service.complaint/                   # IComplaintService, ComplaintServiceImpl,
+│                                         # ComplaintSuggestionService, ComplaintEvent,
+│                                         # ComplaintNotificationListener
+├── service.notification/                # INotificationService, NotificationServiceImpl
 │
 ├── controller/                          # AuthController, StudentController, CourseController,
 │                                         # TimetableController ← new, PerformanceController,
 │                                         # AIController, AdminController,
-│                                         # PublicController  ← new
+│                                         # PublicController  ← new, ComplaintController,
+│                                         # NotificationController, LecturerController
 │
 ├── dto.request/                         # RegisterRequest, LoginRequest, CreateStudentRequest,
 │                                         # EnrolRequest, GradeSubmissionRequest, ExamRequest,
-│                                         # ChatRequest, ContactRequest, NewsletterRequest ← new
+│                                         # ChatRequest, ContactRequest, NewsletterRequest,
+│                                         # CreateComplaintRequest, ComplaintReplyRequest,
+│                                         # UpdateComplaintStatusRequest, AssignComplaintRequest
 ├── dto.response/                        # StudentResponse, CourseResponse, GpaResponse,
 │                                         # RiskResponse, PublicStatsResponse ← new, ApiResponse<T>,
-│                                         # TranscriptTokenResponse, TranscriptVerificationResponse ← new
+│                                         # TranscriptTokenResponse, TranscriptVerificationResponse ← new,
+│                                         # ComplaintResponse, ComplaintSummaryResponse,
+│                                         # ComplaintReplyResponse, ComplaintAttachmentResponse,
+│                                         # ComplaintStatusHistoryResponse, NotificationResponse,
+│                                         # LecturerSummaryResponse, AiSuggestionResponse
 │
 ├── repository/                          # UserRepository, StudentRepository, CourseRepository,
 │                                         # EnrolmentRepository, GradeRepository,
 │                                         # RiskAssessmentRepository, RevokedTokenRepository,
 │                                         # LecturerAvailabilityRepository ← new, DocumentChunkRepository,
-│                                         # LeadRepository  ← new
+│                                         # LeadRepository  ← new, ComplaintRepository,
+│                                         # ComplaintReplyRepository, ComplaintAttachmentRepository,
+│                                         # ComplaintStatusHistoryRepository, NotificationRepository
 │
-├── mapper/                              # StudentMapper, CourseMapper, GradeMapper, RiskMapper
+├── mapper/                              # StudentMapper, CourseMapper, GradeMapper, RiskMapper,
+│                                         # ComplaintMapper, ComplaintReplyMapper,
+│                                         # ComplaintAttachmentMapper,
+│                                         # ComplaintStatusHistoryMapper, NotificationMapper
 │                                         # (MapStruct @Mapper interfaces)
 │
 ├── security/                            # JwtAuthFilter, JwtTokenProvider, SecurityConfig,
@@ -72,7 +92,9 @@ com.yibs.advisor
 │
 ├── exception/                           # StudentNotFoundException, CourseEnrolmentException,
 │                                         # AIServiceException, InsufficientDataException,
-│                                         # GlobalExceptionHandler, ErrorResponse
+│                                         # GlobalExceptionHandler, ErrorResponse,
+│                                         # ComplaintNotFoundException,
+│                                         # InvalidStatusTransitionException
 │
 └── config/                              # SpringAIConfig, RedisCacheConfig, AsyncConfig
                                           # (virtual threads), BucketConfig (rate limiting),
@@ -82,7 +104,11 @@ com.yibs.advisor
 ```
 backend/src/main/resources/
 ├── application.yml
-├── db/migration/                        # Flyway: V1…V10 core schema, V11__create_leads.sql
+├── db/migration/                        # Flyway: V1…V15 core schema/RAG history,
+│                                         # V16…V19 research/timetable/risk-actions (see database-schema.md),
+│                                         # V20__create_complaint_module.sql,
+│                                         # V21__create_notifications.sql,
+│                                         # V22__seed_demo_accounts.sql
 └── ...
 
 backend/src/test/java/com/yibs/advisor/  # mirrors main/java structure 1:1
@@ -114,8 +140,9 @@ src/
 │                                         # LecturerAvailabilityPage ← new
 │   ├── ai/                              # AIChatPage, RiskPage, CareerPage,
 │                                         # CourseRecommendationPage ← new, ResearchPage, ExamGeneratorPage
-│   └── admin/                           # AdminUsersPage, AdminCoursesPage, AdminTimetablePage ← new,
+│   ├── admin/                           # AdminUsersPage, AdminCoursesPage, AdminTimetablePage ← new,
 │                                         # AdminRagPage
+│   └── complaints/                      # ComplaintsListPage, ComplaintDetailPage
 │
 ├── components/
 │   ├── ui/                              # shadcn/ui primitives (generated via shadcn CLI, then
@@ -124,6 +151,9 @@ src/
 │   │                                     # variants via class-variance-authority, etc.
 │   ├── public/                          # ← new: HeroSection, FeatureGrid, StatsStrip,
 │   │                                     #        ContactForm, PublicFooter
+│   ├── complaints/                      # complaint-form, reply-composer, attachment-list,
+│   │                                     # status-badge, priority-badge
+│   ├── notifications/                   # notification-bell
 │   ├── ProtectedRoute.tsx
 │   ├── GpaTrendChart.tsx
 │   ├── RiskBadge.tsx
@@ -137,12 +167,15 @@ src/
 ├── api/                                 # Axios instance + one module per resource
 │   ├── client.ts                        # shared instance, interceptors (token attach, refresh)
 │   ├── auth.ts / students.ts / courses.ts / performance.ts / ai.ts
+│   ├── complaints.ts                    # complaint CRUD, replies, attachments, lecturer list
+│   ├── notifications.ts                 # notification list, unread count, mark-read
 │   └── public.ts                        # ← new: /api/v1/public/* calls
 │
 ├── lib/
 │   ├── utils.ts                         # cn() (clsx + tailwind-merge) — shadcn's standard helper
-│   └── transcript-pdf.ts                # ← new: client-side PDF generation (jsPDF + autoTable)
-│                                        #   + QR authenticity code (qrcode) for the transcript
+│   ├── transcript-pdf.ts                # ← new: client-side PDF generation (jsPDF + autoTable)
+│   │                                    #   + QR authenticity code (qrcode) for the transcript
+│   └── complaint-labels.ts              # STATUS_LABELS for complaint status badges
 ├── routes/                              # route constants — single source of truth for paths
 └── types/                               # shared TS types/interfaces mirroring backend DTOs
 ```

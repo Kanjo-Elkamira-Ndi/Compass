@@ -18,6 +18,7 @@ import {
   Database,
   Menu,
   LogOut,
+  MessageSquareWarning,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useAuth } from "@/contexts/auth-context";
 import type { Role } from "@/types";
 import { cn } from "@/lib/utils";
@@ -53,6 +55,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Courses", path: "/student/courses", icon: BookOpen },
   { label: "Results", path: "/student/results", icon: BarChart3 },
   { label: "Profile", path: "/student/profile", icon: User },
+  { label: "Complaints", path: "/student/complaints", icon: MessageSquareWarning },
   { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
   { label: "Risk Assessment", path: "/ai/risk", icon: ShieldAlert },
   { label: "Research Assistant", path: "/ai/research", icon: FileSearch },
@@ -65,6 +68,7 @@ const LECTURER_NAV: NavItem[] = [
   { label: "Students", path: "/lecturer/students", icon: Users },
   { label: "Courses", path: "/lecturer/courses", icon: BookOpen },
   { label: "Availability", path: "/lecturer/availability", icon: CalendarClock },
+  { label: "Complaints", path: "/lecturer/complaints", icon: MessageSquareWarning },
   { label: "AI Chat", path: "/ai/chat", icon: MessageSquare },
   { label: "Exam Generator", path: "/ai/exam-generator", icon: FileText },
 ];
@@ -74,6 +78,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Courses", path: "/admin/courses", icon: BookOpen },
   { label: "Timetable", path: "/admin/timetable", icon: CalendarClock },
   { label: "RAG Documents", path: "/admin/rag", icon: Database },
+  { label: "Complaints", path: "/admin/complaints", icon: MessageSquareWarning },
 ];
 
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
@@ -276,6 +281,7 @@ export default function AppShell() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-1">
+            <NotificationBell />
             <ThemeToggle />
             <UserMenu />
           </div>

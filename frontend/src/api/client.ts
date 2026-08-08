@@ -12,7 +12,7 @@ import type {
 } from '@/types';
 
 // Create Axios instance with base URL
-const api = axios.create({
+export const api = axios.create({
   baseURL: '/api/v1',
 });
 
@@ -29,7 +29,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Surface the backend's message (ApiResponse.message) on the error object
+    if (error.response?.data?.message) {
+      error.message = error.response.data.message;
+    }
+    const url: string = error.config?.url ?? '';
+    const isAuthRequest = url.includes('/auth/');
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -517,7 +523,7 @@ export async function getAdminUsers(): Promise<ApiResponse<AdminUser[]>> {
   const users = data.data?.content || data.data || [];
   return {
     success: true,
-    data: users.map((u: any) => ({
+    data: (Array.isArray(users) ? users : []).map((u: any) => ({
       id: u.id,
       name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email || '',
       firstName: u.firstName,

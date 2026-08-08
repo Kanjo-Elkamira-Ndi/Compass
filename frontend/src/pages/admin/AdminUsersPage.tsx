@@ -105,7 +105,7 @@ export function AdminUsers() {
   }, [fetchUsers]);
 
   const filteredUsers = users.filter(u => {
-    const name = u.name || u.firstName || u.email || '';
+    const name = u.name || u.email || '';
     const matchesSearch =
       name.toLowerCase().includes(search.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(search.toLowerCase());
@@ -122,7 +122,7 @@ export function AdminUsers() {
   const openEditDialog = (user: AdminUser) => {
     setEditingUser(user);
     reset({
-      name: user.name || user.firstName || '',
+      name: user.name || '',
       email: user.email,
       role: user.role,
       programme: user.programme || '',
@@ -255,7 +255,7 @@ export function AdminUsers() {
                 <TableBody>
                   {filteredUsers.map(user => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name || user.firstName || user.email}</TableCell>
+                      <TableCell className="font-medium">{user.name || user.email}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
                       <TableCell>
                         <Badge className={`text-xs ${roleColors[user.role]}`}>
@@ -279,7 +279,7 @@ export function AdminUsers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => openEditDialog(user)}
-                            aria-label={`Edit ${user.name || user.firstName || 'user'}`}
+                            aria-label={`Edit ${user.name || 'user'}`}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -287,7 +287,7 @@ export function AdminUsers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => openDeactivateDialog(user)}
-                            aria-label={`Deactivate ${user.name || user.firstName || 'user'}`}
+                            aria-label={`Deactivate ${user.name || 'user'}`}
                             disabled={user.status === 'inactive'}
                           >
                             <UserX className="h-4 w-4" />
@@ -374,7 +374,7 @@ export function AdminUsers() {
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate {deactivatingUser?.name || deactivatingUser?.firstName || 'this user'}? They will lose access to the system.
+              Are you sure you want to deactivate {deactivatingUser?.name || 'this user'}? They will lose access to the system.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -86,6 +86,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage(), "ALREADY_ENROLLED"));
     }
 
+    @ExceptionHandler(ComplaintNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleComplaintNotFound(ComplaintNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage(), "COMPLAINT_NOT_FOUND"));
+    }
+
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidStatusTransition(InvalidStatusTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage(), "INVALID_STATUS_TRANSITION"));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
         String message = ex.getMessage();

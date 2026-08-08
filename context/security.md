@@ -90,6 +90,29 @@ purpose — so it gets its own hardening on top of rule 5 above:
   tokens return `200 {valid:false}` rather than 4xx, so nothing is logged
   as an error for a scanned/expired QR.
 
+## Complaint module access rules
+
+Role checks are enforced in the controller (`@PreAuthorize`) **and**
+re-checked per row in `ComplaintServiceImpl`:
+
+| Role | List / view | Reply | Drive status | Assign | AI suggest-reply |
+|---|---|---|---|---|---|
+| STUDENT | Own complaints only | Own complaints | Never | Never | Never |
+| LECTURER | Only complaints assigned to them | Only assigned complaints | Only assigned complaints | Never | Only assigned complaints |
+| ADMIN | All | All | All | All | All |
+
+- **Anonymous submissions:** `is_anonymous=true` masks the filer in API
+  responses — `studentName` becomes `"Anonymous"`, `studentId` /
+  `studentNumber` are nulled, and the student's own replies are returned
+  with `authorId` null. `student_id` is **always stored** on the row —
+  anonymity is a display-layer mask, not an audit trail.
+- **Notifications are strictly user-scoped:** `NotificationServiceImpl`
+  only ever reads/writes rows belonging to the authenticated user (lookups
+  are always filtered by `userId`).
+- **Status transitions are server-enforced** (see `api-reference.md`
+  §Student complaint portal) — a student cannot move a complaint, even
+  their own submission.
+
 ## When adding a new endpoint or role check
 
 1. Decide the narrowest role/ownership check that satisfies the feature —

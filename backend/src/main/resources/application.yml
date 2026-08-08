@@ -30,8 +30,10 @@ spring:
 
   servlet:
     multipart:
+      # 25MB covers the largest single upload (research PDFs); 60MB covers the
+      # worst-case complaint submission (5 attachments x 10MB each).
       max-file-size: 25MB
-      max-request-size: 30MB
+      max-request-size: 60MB
 
   data:
     redis:
@@ -65,6 +67,8 @@ app:
     token-ttl-days: 90
   cors:
     allowed-origins: http://localhost:5173,http://localhost:3000
+  complaints:
+    upload-dir: ${COMPLAINT_UPLOAD_DIR:./uploads/complaints}
   ai:
     openai:
       api-key:
