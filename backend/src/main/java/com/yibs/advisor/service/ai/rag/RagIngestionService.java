@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -23,8 +24,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RagIngestionService {
 
+    /** Below this many characters per page, a PDF is treated as scan/image-only and OCR'd instead. */
+    private static final int MIN_CHARS_PER_PAGE = 30;
+
     private final DocumentChunkRepository documentChunkRepository;
     private final EmbeddingService embeddingService;
+    private final PdfOcrService pdfOcrService;
 
     public int ingestDocument(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename();
@@ -89,11 +94,53 @@ public class RagIngestionService {
         String fileName = path.getFileName().toString();
         log.info("Ingesting document from file: {}", filePath);
 
+        // A hand-verified .txt sibling (same name, .txt extension) takes priority over
+        // OCR. Tesseract's table-layout detection isn't reliably deterministic on dense
+        // scanned tables — it can silently drop whole rows — so for documents where that
+        // matters, a proofread transcript next to the PDF is the trustworthy source; OCR
+        // remains the fallback for everything else.
+        Path transcript = path.resolveSibling(baseName(fileName) + ".txt");
+        if (Files.exists(transcript)) {
+            log.info("Using verified transcript '{}' instead of OCR for '{}'", transcript.getFileName(), fileName);
+            return ingestText(Files.readString(transcript), fileName);
+        }
+
         try (PDDocument document = Loader.loadPDF(path.toFile())) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(document);
+            String text = extractTextWithOcrFallback(document, fileName);
             return ingestText(text, fileName);
         }
+    }
+
+    private String baseName(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot > 0 ? fileName.substring(0, dot) : fileName;
+    }
+
+    /**
+     * Extracts a PDF's text layer, falling back to OCR when there effectively
+     * isn't one — scans/photos (e.g. via a phone scanning app) have no text
+     * layer at all, so PDFTextStripper silently returns next to nothing and
+     * the document would otherwise get "ingested" as empty chunks.
+     */
+    private String extractTextWithOcrFallback(PDDocument document, String fileName) throws IOException {
+        String text = new PDFTextStripper().getText(document);
+
+        int pages = document.getNumberOfPages();
+        if (text.trim().length() >= MIN_CHARS_PER_PAGE * pages) {
+            return text;
+        }
+
+        log.info("'{}' has only {} characters of text across {} page(s) — looks scanned, trying OCR",
+                fileName, text.trim().length(), pages);
+        String ocrText = pdfOcrService.extractText(document);
+        if (!ocrText.isBlank()) {
+            return ocrText;
+        }
+        if (!pdfOcrService.isAvailable()) {
+            log.warn("OCR unavailable — '{}' will be ingested with only {} character(s) of extracted text",
+                    fileName, text.trim().length());
+        }
+        return text;
     }
 
     public int ingestText(String text, String sourceName) {
@@ -134,10 +181,11 @@ public class RagIngestionService {
 
     private String extractText(MultipartFile file) throws IOException {
         try (PDDocument document = Loader.loadPDF(file.getBytes())) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            return stripper.getText(document);
+            return extractTextWithOcrFallback(document, file.getOriginalFilename());
         }
     }
+
+    private static final int CHUNK_OVERLAP = 150;
 
     private List<String> splitIntoChunks(String text, int maxChars) {
         List<String> chunks = new ArrayList<>();
@@ -157,7 +205,15 @@ public class RagIngestionService {
 
             if (end >= cleaned.length()) break;
 
-            start = Math.max(end - 150, start + 1);
+            // Only carry the lookback overlap when the cut was forced near maxChars
+            // (no clean natural break found nearby). Applying it after a short,
+            // cleanly-bounded chunk (e.g. a short paragraph in a memo/list) makes the
+            // next window's break search re-discover the very same nearby break,
+            // advancing only a handful of characters per iteration — for a document
+            // with closely-spaced paragraph breaks this crawls into hundreds of
+            // near-duplicate chunks instead of a few clean ones.
+            boolean cutWasForced = (end - start) >= maxChars - CHUNK_OVERLAP;
+            start = cutWasForced ? Math.max(end - CHUNK_OVERLAP, start + 1) : end;
         }
 
         return chunks;

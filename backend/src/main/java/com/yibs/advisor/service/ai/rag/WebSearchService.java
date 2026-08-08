@@ -35,6 +35,13 @@ public class WebSearchService {
                 .setConnectTimeout(Duration.ofSeconds(10))
                 .setReadTimeout(Duration.ofSeconds(15))
                 .build();
+        if (isAvailable()) {
+            log.info("Tavily web search is configured — chat can fall back to the web for questions the internal documents don't cover");
+        } else {
+            log.warn("TAVILY_API_KEY is not set — web search fallback is disabled. Chat questions with no match in the " +
+                    "internal documents will get a generic \"I don't know\" answer instead of a web-sourced one. " +
+                    "Set TAVILY_API_KEY in .env (see .env.example) to enable it.");
+        }
     }
 
     public boolean isAvailable() {

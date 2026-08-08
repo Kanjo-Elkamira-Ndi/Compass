@@ -21,8 +21,15 @@ public class RagRetrievalService {
     private final AIProviderStrategy aiProvider;
     private final EmbeddingService embeddingService;
 
-    private static final int DEFAULT_LIMIT = 5;
-    private static final int HYBRID_CANDIDATES = 20;
+    private static final int DEFAULT_LIMIT = 6;
+    // No embedding provider currently resolves for the configured AI provider (Groq
+    // doesn't implement an embeddings endpoint — embed() always fails and falls back to
+    // an empty vector, so hybrid search runs FTS-only in practice for every document in
+    // the corpus). With ranking resting entirely on keyword-match scores, a query on a
+    // generic term (e.g. "manager") competing against a much larger source like the
+    // handbook can get pushed out of a narrow candidate pool. Widened from 20 to reduce
+    // that risk; cheap to raise further since this is a single indexed FTS query.
+    private static final int HYBRID_CANDIDATES = 40;
     private static final int RRF_K = 60;
 
     private static final Set<String> STOP_WORDS = Set.of(

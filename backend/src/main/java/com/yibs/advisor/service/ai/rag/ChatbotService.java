@@ -183,11 +183,17 @@ public class ChatbotService {
         return UNKNOWN_MARKERS.stream().anyMatch(lower::contains);
     }
 
+    // "YIBS" is also the acronym of the Yale Institute for Biospheric Studies, a much
+    // more web-prominent institution — an unqualified web search for e.g. "YIBS awards"
+    // returns Yale's results, not this school's. Qualifying with the full name and
+    // location disambiguates it.
+    private static final String WEB_SEARCH_QUALIFIER = "Yaoundé International Business School (YIBS), Cameroon — ";
+
     private WebFallbackResult answerWithWebFallback(String message, PromptBuilder promptBuilder) {
         promptBuilder.systemPrompt(SYSTEM_PROMPT_WEB);
         promptBuilder.addContext("[No matching content found in the ingested YIBS documents for this question. Searching the web...]");
 
-        List<WebSearchResult> webResults = webSearchService.search(message);
+        List<WebSearchResult> webResults = webSearchService.search(WEB_SEARCH_QUALIFIER + message);
         if (!webResults.isEmpty()) {
             promptBuilder.addContext("Web search results:");
             for (WebSearchResult result : webResults) {
