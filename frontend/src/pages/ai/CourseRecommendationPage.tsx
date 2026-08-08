@@ -31,6 +31,7 @@ export function AICourseRecommendation() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
 
   const resolveGoal = useCallback((): string | undefined => {
     if (selectedGoal === 'auto') return undefined;
@@ -38,13 +39,18 @@ export function AICourseRecommendation() {
     return selectedGoal;
   }, [selectedGoal, customGoal]);
 
-  const fetchRecommendations = useCallback(async (goal?: string) => {
+  const fetchRecommendations = useCallback(async (goal?: string): Promise<CourseRecommendation[]> => {
     try {
       const res = await getCourseRecommendations(goal);
       setRecommendations(res.data);
+      // Backend sends a specific reason when it comes back empty (e.g. already
+      // enrolled in everything open) rather than a generic "Success" message.
+      setEmptyMessage(res.data.length === 0 ? res.message ?? null : null);
       setError(null);
+      return res.data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load course recommendations');
+      return [];
     }
   }, []);
 
@@ -62,6 +68,7 @@ export function AICourseRecommendation() {
         const res = await getCourseRecommendations();
         if (!cancelled) {
           setRecommendations(res.data);
+          setEmptyMessage(res.data.length === 0 ? res.message ?? null : null);
           setError(null);
         }
       } catch (err) {
@@ -79,8 +86,10 @@ export function AICourseRecommendation() {
     setIsRefreshing(true);
     setError(null);
     try {
-      await fetchRecommendations(resolveGoal());
-      toast.success('Course recommendations generated.');
+      const results = await fetchRecommendations(resolveGoal());
+      if (results.length > 0) {
+        toast.success('Course recommendations generated.');
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -169,8 +178,11 @@ export function AICourseRecommendation() {
       {!error && recommendations.length === 0 && (
         <EmptyState
           icon={<GraduationCap className="h-12 w-12 text-muted-foreground" />}
-          title="No course recommendations yet"
-          description="Choose a career goal above and generate personalized course recommendations based on your profile."
+          title={emptyMessage ? "You're all caught up" : 'No course recommendations yet'}
+          description={
+            emptyMessage
+              ?? 'Choose a career goal above and generate personalized course recommendations based on your profile.'
+          }
         />
       )}
 

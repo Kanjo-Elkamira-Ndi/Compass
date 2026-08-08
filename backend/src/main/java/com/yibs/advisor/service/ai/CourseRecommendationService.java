@@ -132,7 +132,14 @@ public class CourseRecommendationService {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to parse course recommendations: {}", e.getMessage());
+            log.warn("Failed to parse course recommendations, using heuristic: {}", e.getMessage());
+        }
+
+        // Either the AI response didn't parse, or it parsed but named courses outside
+        // the candidate catalog (e.g. hallucinated codes) — candidates exist, so the
+        // student should still see something rather than a silently empty page.
+        if (recommendations.isEmpty()) {
+            recommendations = buildHeuristicRecommendations(candidates, student);
         }
 
         recommendations.sort(Comparator.comparing(CourseRecommendationResponse::getMatchScore).reversed());
@@ -140,6 +147,44 @@ public class CourseRecommendationService {
             recommendations.get(i).setRank(i + 1);
         }
         return recommendations;
+    }
+
+    /**
+     * Deterministic fallback used when the AI response can't be parsed or doesn't
+     * name any course in the candidate catalog. Ranks candidates by overlap between
+     * the student's recorded skills and the course title, falling back to a flat
+     * match score ordered by semester so the student always sees a next step.
+     */
+    private List<CourseRecommendationResponse> buildHeuristicRecommendations(List<Course> candidates, Student student) {
+        Set<String> skillWords = student.getSkills() == null ? Set.of()
+                : student.getSkills().stream()
+                    .flatMap(skill -> java.util.Arrays.stream(skill.toLowerCase().split("\\s+")))
+                    .collect(java.util.stream.Collectors.toSet());
+
+        return candidates.stream()
+                .sorted(Comparator.comparing(Course::getSemester))
+                .limit(MAX_RECOMMENDATIONS)
+                .map(course -> {
+                    List<String> matchedSkills = java.util.Arrays.stream(course.getTitle().toLowerCase().split("\\s+"))
+                            .filter(skillWords::contains)
+                            .distinct()
+                            .toList();
+                    boolean matched = !matchedSkills.isEmpty();
+                    return CourseRecommendationResponse.builder()
+                            .courseId(course.getId())
+                            .courseCode(course.getCode())
+                            .courseTitle(course.getTitle())
+                            .credits(course.getCreditHours())
+                            .semester(course.getSemester())
+                            .academicYear(course.getAcademicYear())
+                            .matchScore(BigDecimal.valueOf(matched ? 75 : 60))
+                            .rationale(matched
+                                    ? "Builds on your existing skills in " + String.join(", ", matchedSkills) + "."
+                                    : "Next open course in your programme's curriculum for semester " + course.getSemester() + ".")
+                            .alignedSkills(matchedSkills)
+                            .build();
+                })
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
     private String resolveCareerGoal(Student student, String explicitGoal) {

@@ -173,6 +173,14 @@ public class AIController {
         UUID studentId = UUID.fromString(authentication.getName());
         List<CourseRecommendationResponse> recommendations =
                 courseRecommendationService.recommendCourses(studentId, careerGoal);
+        // The service only ever returns empty when there's no open course left in the
+        // student's programme they aren't already enrolled in — say so explicitly,
+        // instead of a bare success with no data that reads the same as a stalled request.
+        if (recommendations.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.ok(
+                    "You're already enrolled in every open course available for your programme right now.",
+                    recommendations));
+        }
         return ResponseEntity.ok(ApiResponse.ok(recommendations));
     }
 }

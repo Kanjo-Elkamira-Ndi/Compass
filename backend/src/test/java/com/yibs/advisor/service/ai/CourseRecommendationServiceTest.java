@@ -129,7 +129,7 @@ class CourseRecommendationServiceTest {
     }
 
     @Test
-    void recommendCourses_withHallucinatedCodes_shouldSkipUnknownCourses() {
+    void recommendCourses_withHallucinatedCodes_shouldFallBackToHeuristic() {
         when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
         when(enrolmentRepository.findByStudentId(student.getId())).thenReturn(List.of());
         when(courseRepository.findByProgrammeAndStatus(any(), any())).thenReturn(List.of(cse501, cse502));
@@ -138,7 +138,11 @@ class CourseRecommendationServiceTest {
 
         List<CourseRecommendationResponse> result = service.recommendCourses(student.getId(), "Data Scientist");
 
-        assertTrue(result.isEmpty());
+        // None of the AI's named courses exist in the catalog, but there are still
+        // candidate courses the student hasn't taken — the heuristic fallback should
+        // surface those rather than leaving the student with nothing.
+        assertEquals(2, result.size());
+        assertTrue(result.stream().allMatch(r -> r.getRank() > 0));
     }
 
     @Test
