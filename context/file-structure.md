@@ -99,7 +99,8 @@ backend/src/main/resources/
 ├── application.yml
 ├── db/migration/                        # Flyway: V1…V15 core schema/RAG history,
 │                                         # V16__create_complaint_module.sql,
-│                                         # V17__create_notifications.sql
+│                                         # V17__create_notifications.sql,
+│                                         # V18__seed_demo_accounts.sql
 └── ...
 
 backend/src/test/java/com/yibs/advisor/  # mirrors main/java structure 1:1

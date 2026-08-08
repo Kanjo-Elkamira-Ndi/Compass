@@ -30,7 +30,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Surface the backend's message (ApiResponse.message) on the error object
+    if (error.response?.data?.message) {
+      error.message = error.response.data.message;
+    }
+    const url: string = error.config?.url ?? '';
+    const isAuthRequest = url.includes('/auth/');
+    if (error.response?.status === 401 && !isAuthRequest) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       window.location.href = '/login';

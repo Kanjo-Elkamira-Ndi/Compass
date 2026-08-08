@@ -262,6 +262,7 @@ scheduled job).
 | V15__revert_vector_to_text.sql | Final state: `embedding` reverted to text, full-text search |
 | **V16__create_complaint_module.sql** | Complaint portal: `complaints`, `complaint_replies`, `complaint_attachments`, `complaint_status_history` |
 | **V17__create_notifications.sql** | In-app `notifications` table (complaint portal events, future modules) |
+| **V18__seed_demo_accounts.sql** | Demo accounts for the login page (`ada@compass.edu` STUDENT, `dr.ngwa@compass.edu` LECTURER, password `password`) and fixes the V10 admin placeholder hash |
 
 When adding a new migration: next sequential `V{n}__description.sql`,
 never edit a migration that has already run in any shared environment.

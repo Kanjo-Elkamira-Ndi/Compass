@@ -32,6 +32,11 @@ spring:
     redis:
       url: redis://localhost:6379
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 60MB
+
   ai:
     active-provider: openai
     openai:
@@ -57,6 +62,8 @@ app:
     refresh-token-expiration-days: 7
   cors:
     allowed-origins: http://localhost:5173,http://localhost:3000
+  complaints:
+    upload-dir: ${COMPLAINT_UPLOAD_DIR:./uploads/complaints}
   ai:
     openai:
       api-key:
