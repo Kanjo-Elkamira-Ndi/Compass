@@ -14,6 +14,12 @@ import { getRiskAssessment, runRiskAssessment } from '@/api/client';
 import type { RiskAssessment } from '@/types';
 import { format } from 'date-fns';
 
+function formatUpdatedAt(value: string | undefined): string {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'N/A' : format(date, 'MMM d, yyyy HH:mm');
+}
+
 export function AIRisk() {
   const { user } = useAuth();
   const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
@@ -169,7 +175,7 @@ export function AIRisk() {
               <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  Updated {format(new Date(assessment.lastUpdated), 'MMM d, yyyy HH:mm')}
+                  Updated {formatUpdatedAt(assessment.lastUpdated)}
                 </span>
               </div>
             </div>

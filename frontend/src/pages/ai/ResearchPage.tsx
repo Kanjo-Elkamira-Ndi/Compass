@@ -289,7 +289,7 @@ export function AIResearch() {
                       <div key={upload.id} className="flex items-center gap-2">
                         <button
                           onClick={() => handleSelectUpload(upload)}
-                          className={`flex-1 text-left px-3 py-2.5 rounded-md text-sm transition-colors hover:bg-accent flex items-center gap-3 ${
+                          className={`flex-1 min-w-0 text-left px-3 py-2.5 rounded-md text-sm transition-colors hover:bg-accent flex items-center gap-3 ${
                             selectedUpload?.id === upload.id ? 'bg-accent' : ''
                           }`}
                         >

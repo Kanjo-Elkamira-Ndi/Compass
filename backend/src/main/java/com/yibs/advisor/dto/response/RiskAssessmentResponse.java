@@ -21,6 +21,7 @@ public class RiskAssessmentResponse {
     private BigDecimal riskScore;
     private String riskLevel;
     private List<RiskFactor> riskFactors;
+    private List<RecommendedAction> recommendedActions;
     private OffsetDateTime assessedAt;
 
     @Data
@@ -30,7 +31,20 @@ public class RiskAssessmentResponse {
     public static class RiskFactor {
         private String name;
         private BigDecimal value;
+        private BigDecimal weight;
         private String status;
         private String description;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecommendedAction {
+        private String id;
+        private String title;
+        private String description;
+        private String priority;
+        private String category;
     }
 }

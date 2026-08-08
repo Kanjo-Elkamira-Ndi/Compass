@@ -47,6 +47,11 @@ public class RiskAssessment {
     @Builder.Default
     private List<Map<String, Object>> riskFactors = List.of();
 
+    @Type(JsonType.class)
+    @Column(name = "recommended_actions", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<Map<String, Object>> recommendedActions = List.of();
+
     @Column(name = "assessed_at", nullable = false)
     @Builder.Default
     private OffsetDateTime assessedAt = OffsetDateTime.now();

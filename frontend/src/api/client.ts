@@ -2,7 +2,7 @@ import axios from 'axios';
 import type {
   User, Role, LoginCredentials, RegisterData,
   Course, Enrollment, GradeRecord, GPATrend,
-  RiskAssessment, ChatSession, ChatMessage,
+  RiskAssessment, RiskFactor, RecommendedAction, ChatSession, ChatMessage,
   ResearchUpload, ExamQuestion, ExamConfig,
   CareerRecommendation, CourseRecommendation, AdminUser, RAGDocument,
   Student, StudentDashboard, LecturerDashboard, LecturerTimetable, AvailabilitySlot,
@@ -210,10 +210,64 @@ export async function getGradeRecords(studentId: string): Promise<GradeRecord[]>
 }
 
 // ===================== Risk Assessment =====================
+const RISK_LEVEL_MAP: Record<string, RiskLevel> = {
+  EXCELLENT: 'Excellent',
+  PASSING: 'Passing',
+  AT_RISK: 'At-Risk',
+  CRITICAL: 'Critical',
+};
+
+// The backend's RiskAssessmentResponse uses its own field names/scales
+// (riskScore 0.0-1.0, riskLevel as the Java enum name) — map it onto the
+// shape the UI actually renders instead of passing the raw response
+// straight through. The backend now persists weight and recommendedActions
+// itself; the derivation below only kicks in for rows saved before that
+// (an even weight split, and actions inferred from non-'good' factors).
+function mapRiskAssessment(r: any): RiskAssessment {
+  const rawFactors = r.riskFactors ?? [];
+  const evenWeight = rawFactors.length > 0 ? Math.round(100 / rawFactors.length) : 0;
+
+  const factors: RiskFactor[] = rawFactors.map((f: any) => ({
+    name: f.name,
+    value: f.value,
+    weight: f.weight ?? evenWeight,
+    status: f.status,
+    description: f.description,
+  }));
+
+  const rawActions = r.recommendedActions ?? [];
+  const recommendedActions: RecommendedAction[] = rawActions.length > 0
+    ? rawActions.map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        priority: a.priority,
+        category: a.category,
+      }))
+    : factors
+        .filter(f => f.status !== 'good')
+        .map((f, i) => ({
+          id: `${r.id ?? r.studentId ?? 'factor'}-${i}`,
+          title: `Address: ${f.name}`,
+          description: f.description,
+          priority: f.status === 'danger' ? 'high' : 'medium',
+          category: f.name,
+        }));
+
+  return {
+    studentId: r.studentId,
+    level: RISK_LEVEL_MAP[r.riskLevel] ?? 'Passing',
+    score: Math.round((r.riskScore ?? 0) * 100),
+    factors,
+    recommendedActions,
+    lastUpdated: r.assessedAt ?? new Date().toISOString(),
+  };
+}
+
 export async function getRiskAssessment(studentId: string): Promise<ApiResponse<RiskAssessment>> {
   try {
     const { data } = await api.get(`/ai/risk-assessment/${studentId}/latest`);
-    return data;
+    return { ...data, data: mapRiskAssessment(data.data) };
   } catch {
     // Return default if no assessment exists yet
     return {
@@ -221,7 +275,7 @@ export async function getRiskAssessment(studentId: string): Promise<ApiResponse<
       data: {
         studentId,
         level: 'Passing',
-        score: 0.5,
+        score: 50,
         factors: [],
         recommendedActions: [],
         lastUpdated: new Date().toISOString(),
@@ -233,14 +287,14 @@ export async function getRiskAssessment(studentId: string): Promise<ApiResponse<
 export async function runRiskAssessment(studentId: string): Promise<ApiResponse<RiskAssessment>> {
   try {
     const { data } = await api.post(`/ai/risk-assessment/${studentId}`);
-    return data;
+    return { ...data, data: mapRiskAssessment(data.data) };
   } catch {
     return {
       success: true,
       data: {
         studentId,
         level: 'Passing',
-        score: 0.5,
+        score: 50,
         factors: [],
         recommendedActions: [],
         lastUpdated: new Date().toISOString(),
