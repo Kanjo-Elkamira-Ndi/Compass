@@ -48,6 +48,7 @@ Universities manage thousands of students who constantly need guidance on:
 9. **AI Module 6 — Personalized Course Recommendations** — ranks the student's open, not-yet-enrolled courses against their career goal (defaults to the top career recommendation); powers "based on your career goal" advising.
 10. **Public Marketing Website** — unauthenticated landing page, feature/about/FAQ/contact pages, lead capture, and the on-ramp into registration. See `architecture.md` §Public Website Architecture and `ui-context.md` §Route Map.
 11. **Bonus — RAG knowledge base** — university handbook, regulations, research policies, and course catalog are ingested so the chatbot can answer from official documents rather than general internet knowledge.
+12. **Student Complaint Portal** — students file complaints by category and priority (optionally anonymous, up to 5 attachments each); lecturers and admins reply and drive the status lifecycle (SUBMITTED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED), and admins assign/route work to lecturers. Every event raises an **in-app notification**, surfaced through the notification bell in the app shell.
 
 ## Technology stack
 

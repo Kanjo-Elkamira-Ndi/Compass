@@ -50,8 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.data.token);
       setUser(response.data.user);
       return response.data.user;
-    } catch {
-      return null;
+    } catch (err) {
+      console.error('Login error:', err);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return response.data.user;
     } catch (err) {
       console.error('Register error:', err);
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }

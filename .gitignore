@@ -25,6 +25,7 @@ node_modules/
 frontend/dist/
 frontend/build/
 .vite/
+*.tsbuildinfo
 
 # Logs
 *.log
