@@ -12,6 +12,10 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
 
     List<DocumentChunk> findBySourceDocument(String sourceDocument);
 
+    @Query("SELECT d.sourceDocument, COUNT(d), MIN(d.createdAt) FROM DocumentChunk d " +
+            "GROUP BY d.sourceDocument ORDER BY MIN(d.createdAt) DESC")
+    List<Object[]> findDocumentStats();
+
     @Query(value = "SELECT * FROM document_chunks " +
             "WHERE search_vector @@ to_tsquery('english', :tsquery) " +
             "ORDER BY ts_rank(search_vector, to_tsquery('english', :tsquery)) DESC " +

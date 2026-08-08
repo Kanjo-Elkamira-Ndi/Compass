@@ -1,6 +1,7 @@
 package com.yibs.advisor.service.ai.rag;
 
 import com.yibs.advisor.domain.ai.DocumentChunk;
+import com.yibs.advisor.dto.response.RagDocumentResponse;
 import com.yibs.advisor.repository.DocumentChunkRepository;
 import com.yibs.advisor.service.ai.embedding.EmbeddingService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +32,56 @@ public class RagIngestionService {
 
         String text = extractText(file);
         return ingestText(text, fileName);
+    }
+
+    /**
+     * Ingests the file and returns a full document record describing it, for
+     * endpoints (like the admin upload) that need to render it immediately
+     * without a round-trip re-fetch.
+     */
+    public RagDocumentResponse ingestAndDescribe(MultipartFile file, String uploadedBy) throws IOException {
+        String fileName = file.getOriginalFilename();
+        int chunks = ingestDocument(file);
+
+        return RagDocumentResponse.builder()
+                .id(fileName)
+                .fileName(fileName)
+                .fileType(fileExtension(fileName))
+                .fileSize(file.getSize())
+                .chunkCount(chunks)
+                .uploadedBy(uploadedBy)
+                .uploadedAt(OffsetDateTime.now())
+                .status("indexed")
+                .build();
+    }
+
+    /** Lists every distinct document currently in the RAG knowledge base. */
+    public List<RagDocumentResponse> listDocuments() {
+        return documentChunkRepository.findDocumentStats().stream()
+                .map(row -> {
+                    String fileName = (String) row[0];
+                    long chunkCount = ((Number) row[1]).longValue();
+                    OffsetDateTime uploadedAt = row[2] instanceof OffsetDateTime
+                            ? (OffsetDateTime) row[2]
+                            : null;
+                    return RagDocumentResponse.builder()
+                            .id(fileName)
+                            .fileName(fileName)
+                            .fileType(fileExtension(fileName))
+                            .fileSize(0)
+                            .chunkCount(chunkCount)
+                            .uploadedBy("—")
+                            .uploadedAt(uploadedAt)
+                            .status("indexed")
+                            .build();
+                })
+                .toList();
+    }
+
+    private String fileExtension(String fileName) {
+        if (fileName == null) return "";
+        int dot = fileName.lastIndexOf('.');
+        return dot >= 0 && dot < fileName.length() - 1 ? fileName.substring(dot + 1).toUpperCase() : "";
     }
 
     public int ingestFromFile(String filePath) throws IOException {

@@ -38,7 +38,6 @@ import java.util.UUID;
 public class AIController {
 
     private final ChatbotService chatbotService;
-    private final RagIngestionService ragIngestionService;
     private final RiskAssessmentService riskAssessmentService;
     private final ResearchAssistantService researchAssistantService;
     private final ExamGeneratorService examGeneratorService;
@@ -81,17 +80,6 @@ public class AIController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("No risk assessment found for this student", "NOT_FOUND"));
         }
-    }
-
-    // ─── RAG Ingestion (temporary — move to AdminController in Phase 11) ──
-    @PostMapping("/rag/ingest")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> ingestDocument(
-            @RequestParam("file") MultipartFile file) throws Exception {
-        int chunks = ragIngestionService.ingestDocument(file);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("Document ingested successfully",
-                        Map.of("fileName", file.getOriginalFilename(), "chunksCreated", chunks)));
     }
 
     // ─── Research Assistant ──────────────────────────────────

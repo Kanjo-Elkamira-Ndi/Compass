@@ -509,8 +509,8 @@ export async function updateCourse(courseId: string, courseData: Partial<Course>
 }
 
 export async function getRAGDocuments(): Promise<ApiResponse<RAGDocument[]>> {
-  // Backend doesn't have this endpoint yet
-  return { success: true, data: [] };
+  const { data } = await api.get('/admin/rag/documents');
+  return data;
 }
 
 export async function uploadRAGDocument(file: File): Promise<ApiResponse<RAGDocument>> {

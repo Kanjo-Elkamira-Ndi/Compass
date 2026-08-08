@@ -107,7 +107,8 @@ token — a cross-account attempt returns `403 ACCESS_DENIED`.
 | POST | /ai/exams | Save finalised exam | Yes | LECTURER |
 | GET | /ai/career-recommendations | Get/regenerate career recommendations | Yes | STUDENT(own) |
 | GET | /ai/course-recommendations | Personalized course recommendations from the student's programme (open, not-yet-enrolled courses) ranked against a career goal (`?careerGoal=` optional; defaults to the student's top career recommendation) | Yes | STUDENT(own) |
-| POST | /admin/rag/upload | Upload university PDF to RAG knowledge base | Yes | ADMIN |
+| POST | /admin/rag/upload | Upload university PDF to RAG knowledge base; returns the created document record (`id, fileName, fileType, fileSize, chunkCount, uploadedBy, uploadedAt, status`) | Yes | ADMIN |
+| GET | /admin/rag/documents | List every document currently in the RAG knowledge base, aggregated from `document_chunks` (`fileSize`/`uploadedBy` are only populated for documents uploaded via `/admin/rag/upload` in the current schema — pre-existing/seeded documents show `0`/`—`) | Yes | ADMIN |
 
 ## Public website endpoints — `/public/*`
 

@@ -27,6 +27,12 @@ function formatFileSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
+function formatUploadDate(value: string | undefined): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : format(date, 'MMM d, yyyy');
+}
+
 const statusBadge: Record<string, { label: string; cls: string }> = {
   indexed: { label: 'Indexed', cls: 'bg-success/10 text-success border-success/20' },
   processing: { label: 'Processing', cls: 'bg-warning/10 text-warning border-warning/20' },
@@ -230,7 +236,7 @@ export function AdminRAGDocs() {
                           {doc.uploadedBy}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                          {format(new Date(doc.uploadedAt), 'MMM d, yyyy')}
+                          {formatUploadDate(doc.uploadedAt)}
                         </TableCell>
                         <TableCell>
                           <Badge className={`text-xs ${st.cls}`}>{st.label}</Badge>
