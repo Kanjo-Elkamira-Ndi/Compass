@@ -33,4 +33,7 @@ logs/
 
 # Docker volumes (local data)
 postgres_data/
+
+# Complaint uploads (runtime data)
+backend/uploads/
 backend/src/main/resources/application.yml
