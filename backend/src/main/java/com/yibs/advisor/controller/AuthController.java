@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
+
+    @Value("${app.jwt.refresh-token-expiration-days}")
+    private int refreshTokenExpirationDays;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
@@ -37,7 +41,7 @@ public class AuthController {
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false); // true in production
         refreshCookie.setPath("/api/v1/auth/refresh");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+        refreshCookie.setMaxAge(refreshTokenExpirationDays * 24 * 60 * 60);
         refreshCookie.setAttribute("SameSite", "Strict");
         httpResponse.addCookie(refreshCookie);
 
@@ -55,7 +59,7 @@ public class AuthController {
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false);
         refreshCookie.setPath("/api/v1/auth/refresh");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        refreshCookie.setMaxAge(refreshTokenExpirationDays * 24 * 60 * 60);
         refreshCookie.setAttribute("SameSite", "Strict");
         httpResponse.addCookie(refreshCookie);
 

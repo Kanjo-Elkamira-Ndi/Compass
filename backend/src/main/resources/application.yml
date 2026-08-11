@@ -60,8 +60,12 @@ management:
 app:
   jwt:
     secret: ${JWT_SECRET:dev-only-change-in-production-minimum-256-bits-required-for-hs256-algorithm}
-    access-token-expiration-ms: 900000
-    refresh-token-expiration-days: 7
+    # 14 days — access tokens are the only thing actually gating a session right
+    # now (see AuthController/AuthServiceImpl: refresh tokens aren't real opaque
+    # tokens yet, and the frontend never calls /auth/refresh), so this value is
+    # the whole session lifetime, not just a short-lived leg of a refresh flow.
+    access-token-expiration-ms: 1209600000
+    refresh-token-expiration-days: 14
   transcript:
     signing-secret: ${TRANSCRIPT_SIGNING_SECRET:dev-only-transcript-signing-secret-256-bits-minimum}
     token-ttl-days: 90

@@ -13,6 +13,7 @@ import com.yibs.advisor.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.jwt.refresh-token-expiration-days}")
+    private int refreshTokenExpirationDays;
 
     @Override
     @Transactional
@@ -198,7 +202,7 @@ public class AuthServiceImpl implements IAuthService {
         RevokedToken revoked = RevokedToken.builder()
                 .tokenHash(tokenHash)
                 .user(user)
-                .expiresAt(OffsetDateTime.now().plusDays(7))
+                .expiresAt(OffsetDateTime.now().plusDays(refreshTokenExpirationDays))
                 .build();
         revokedTokenRepository.save(revoked);
     }
