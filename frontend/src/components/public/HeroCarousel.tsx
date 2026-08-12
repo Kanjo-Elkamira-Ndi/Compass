@@ -22,14 +22,14 @@ const slides: SlideData[] = [
     title: "GPA Trends",
     description:
   'Personalized career recommendations based on your academic profile.',
-    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop&crop=center&q=80',
+    image: '/hero_2.webp',
     imageAlt: 'African graduates celebrating their achievement'
   },
   {
     title: "Career Paths",
     description:
       "Discover ranked career recommendations based on your courses, skills, and grades.",
-    image: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&h=600&fit=crop&crop=center&q=80",
+    image: "/hero_3.jpg",
     imageAlt: "African graduates celebrating their achievement",
   },
   {

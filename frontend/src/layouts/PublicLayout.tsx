@@ -247,36 +247,59 @@ export default function PublicLayout() {
               <h3 className="mb-3 text-sm font-semibold text-foreground">Connect</h3>
               <div className="flex items-center gap-3">
                 <Button
+                  asChild
                   variant="ghost"
                   size="icon"
-                  aria-label="Twitter"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  <Twitter className="size-4" />
+                  <a
+                    href="https://x.com/kanjo_elkamira"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="X (Twitter)"
+                  >
+                    <Twitter className="size-4" />
+                  </a>
                 </Button>
                 <Button
+                  asChild
                   variant="ghost"
                   size="icon"
-                  aria-label="GitHub"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  <Github className="size-4" />
+                  <a
+                    href="https://github.com/Kanjo-Elkamira-Ndi/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub"
+                  >
+                    <Github className="size-4" />
+                  </a>
                 </Button>
                 <Button
+                  asChild
                   variant="ghost"
                   size="icon"
-                  aria-label="LinkedIn"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  <Linkedin className="size-4" />
+                  <a
+                    href="https://www.linkedin.com/in/kanjo-elkamira-ndi-a767b7229"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                  >
+                    <Linkedin className="size-4" />
+                  </a>
                 </Button>
                 <Button
+                  asChild
                   variant="ghost"
                   size="icon"
-                  aria-label="Email"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  <Mail className="size-4" />
+                  <a href="mailto:kanjoelkamira@gmail.com" aria-label="Email">
+                    <Mail className="size-4" />
+                  </a>
                 </Button>
               </div>
             </div>
@@ -289,7 +312,7 @@ export default function PublicLayout() {
               &copy; {new Date().getFullYear()} Compass. All rights reserved.
             </p>
             <p className="text-xs text-muted-foreground">
-              Built with AI for students, by students.
+              Built by students, for students.
             </p>
           </div>
         </div>

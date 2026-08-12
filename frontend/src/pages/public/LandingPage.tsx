@@ -27,7 +27,7 @@ const FEATURES = [
     title: 'AI Academic Chat',
     description:
       'Get instant answers about courses, policies, and academic requirements.',
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop&crop=center&q=80',
+    image: '/ai_chat.jpeg',
     imageAlt: 'African students using AI chat for academic guidance'
   },
   {
@@ -35,7 +35,7 @@ const FEATURES = [
     title: 'Risk Assessment',
     description:
       'Early warning system that identifies at-risk students before they fall behind.',
-    image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=400&fit=crop&crop=center&q=80',
+    image: '/hero_2.webp',
     imageAlt: 'Students receiving academic risk assessment and support'
   },
   {
@@ -59,7 +59,7 @@ const FEATURES = [
     title: 'Career Advisor',
     description:
   'Personalized career recommendations based on your academic profile.',
-    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop&crop=center&q=80',
+    image: '/career_advisor.jpeg',
     imageAlt: 'African graduates celebrating their achievement'
   },
   {
@@ -67,7 +67,7 @@ const FEATURES = [
     title: 'Peer Learning Hub',
     description:
       'Connect with fellow students for group study sessions, peer tutoring, and collaborative learning experiences.',
-    image: 'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop&crop=center&q=80',
+    image: '/hero_1.jpg',
     imageAlt: 'African students collaborating and learning together'
   },
 ];
@@ -124,23 +124,20 @@ const TESTIMONIALS = [
   {
     quote:
       'Compass helped me realize I was on the wrong track for my degree requirements. The risk assessment flagged me early, and I was able to adjust my course load before it was too late.',
-    name: 'Amira Hassan',
-    role: 'Computer Science, Year 3',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face&q=80'
+    name: 'Angel Zee Ngoh',
+    role: 'SWE Lvl 3',
   },
   {
     quote:
       "The AI chat is like having a 24/7 academic advisor. I got clear answers about credit transfers and prerequisite rules in seconds — no more waiting days for an email reply.",
-    name: 'James Okonkwo',
-    role: 'Data Science, Year 2',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face&q=80'
+    name: 'Ndip Melvida',
+    role: 'BKFI Lvl 3',
   },
   {
     quote:
       'The research assistant saved me hours of work. I uploaded my literature review draft and got a structured analysis with gaps I hadn\'t even noticed. Truly game-changing.',
-    name: 'Sofia Martinez',
-    role: 'Psychology, Year 4',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face&q=80'
+    name: 'Ndamsa Clement',
+    role: 'CSN Lvl 2',
   },
 ];
 
@@ -297,18 +294,9 @@ export function LandingPage() {
                     <p className="text-sm text-foreground/80 leading-relaxed flex-1">
                       &ldquo;{t.quote}&rdquo;
                     </p>
-                    <div className="mt-6 flex items-center gap-3">
-                      <div className="relative flex size-10 items-center justify-center rounded-full overflow-hidden bg-primary/10">
-                        <img 
-                          src={t.avatar} 
-                          alt={t.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">{t.role}</p>
-                      </div>
+                    <div className="mt-6">
+                      <p className="text-sm font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
                     </div>
                   </CardContent>
                 </Card>
