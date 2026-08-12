@@ -2,6 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Applies the theme class before first paint, so there's no flash of the
+      // light theme while React mounts. Must mirror ThemeProvider's own default
+      // (dark for first-time visitors) and storage key ("theme") exactly.
+      (function () {
+        var stored = localStorage.getItem("theme");
+        var resolved =
+          stored === "light" || stored === "dark"
+            ? stored
+            : stored === "system"
+              ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+              : "dark";
+        document.documentElement.classList.add(resolved);
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/compass-icon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/compass-icon-16.png" />

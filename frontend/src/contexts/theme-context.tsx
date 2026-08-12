@@ -17,8 +17,10 @@ function getSystemTheme(): "light" | "dark" {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
-    return (localStorage.getItem("theme") as Theme) || "light";
+    if (typeof window === "undefined") return "dark";
+    // No stored preference yet (first-time visitor) -> default to dark. Once a
+    // user picks a theme, setTheme() persists it and this fallback no longer applies.
+    return (localStorage.getItem("theme") as Theme) || "dark";
   });
 
   const resolvedTheme = theme === "system" ? getSystemTheme() : theme;
