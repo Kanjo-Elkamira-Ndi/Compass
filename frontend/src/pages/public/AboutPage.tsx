@@ -70,7 +70,7 @@ const TEAM = [
     image: '/dean.jpeg',
   },
   {
-    name: 'Kanjo Elkamira',
+    name: 'Kanjo Elkamira Ndi',
     role: 'Lead Software Engineer & Systems Architect',
     bio: 'Designs and builds the systems behind Compass end to end — from the AI pipelines that power academic guidance to the infrastructure that keeps it running reliably for every student.',
     initials: 'KE',
