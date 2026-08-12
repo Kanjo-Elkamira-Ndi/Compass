@@ -52,19 +52,19 @@ const CONTACT_INFO = [
   {
     icon: Mail,
     title: 'Email',
-    detail: 'hello@compass.edu',
+    detail: 'kanjoelkamira@gmail.com',
     description: 'We reply within 24 hours',
   },
   {
     icon: MapPin,
     title: 'Location',
-    detail: 'University Avenue, Building C',
-    description: 'Douala, Cameroon',
+    detail: 'Simbock, Yaoundé',
+    description: 'Yaoundé International Business School (YIBS)',
   },
   {
     icon: Phone,
     title: 'Phone',
-    detail: '+237 6 00 00 00 00',
+    detail: '+237 679 403 530',
     description: 'Mon-Fri, 8AM - 5PM',
   },
 ];

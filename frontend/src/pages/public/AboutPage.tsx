@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import PageHeroCarousel from '@/components/public/PageHeroCarousel';
 import StorySection from '@/components/public/StorySection';
@@ -64,28 +63,44 @@ const VALUES: { icon: LucideIcon; title: string; description: string }[] = [
 /* ─── Team ─── */
 const TEAM = [
   {
-    name: 'Dr. Priya Naidoo',
-    role: 'Founder & Lead Researcher',
-    bio: 'Former university academic advisor with 12 years of experience in student success initiatives. Priya conceived Compass after seeing hundreds of students struggle with the same preventable issues.',
-    initials: 'PN',
+    name: 'Dr. Engr. Kimbi Eric Jam',
+    role: 'Founder & Dean of Studies',
+    bio: 'Dean of Studies and academic researcher across several of Cameroon’s leading institutions. His years advising students in person became the spark that led to Compass — turning decades of academic guidance into something every student could reach, day or night.',
+    initials: 'KJ',
+    image: '/dean.jpeg',
   },
   {
-    name: 'Marcus Chen',
-    role: 'Chief Technology Officer',
-    bio: 'Full-stack engineer and ML specialist who previously built AI platforms at two ed-tech startups. Marcus leads the technical architecture and model development.',
-    initials: 'MC',
+    name: 'Kanjo Elkamira',
+    role: 'Lead Software Engineer & Systems Architect',
+    bio: 'Designs and builds the systems behind Compass end to end — from the AI pipelines that power academic guidance to the infrastructure that keeps it running reliably for every student.',
+    initials: 'KE',
+    image: '/kanjo_elkamira.jpg',
   },
   {
-    name: 'Aisha Bello',
-    role: 'Head of Product',
-    bio: 'UX researcher turned product manager. Aisha ensures every feature in Compass is grounded in real student needs and validated through extensive user testing.',
-    initials: 'AB',
+    name: 'Chatioh Densley',
+    role: 'Lead UI/UX Designer & Frontend Developer',
+    bio: 'Shapes how Compass looks and feels — turning complex academic workflows into interfaces students actually enjoy using, from first login to graduation.',
+    initials: 'CD',
+    image: '/chatioh_densley.jpg',
   },
   {
-    name: 'Daniel Kowalski',
-    role: 'AI Engineering Lead',
-    bio: 'NLP specialist with a PhD in computational linguistics. Daniel designs the RAG pipelines and fine-tunes models for academic domain accuracy.',
-    initials: 'DK',
+    name: 'Fola Loius',
+    role: 'Software / DevOps Engineer',
+    bio: 'Keeps Compass shipping safely and running smoothly — from CI/CD pipelines to deployment infrastructure — so new features reach students without breaking what already works.',
+    initials: 'FL',
+    image: '/fola_loius.jpg',
+  },
+  {
+    name: 'Jackai Zo’o Bill Emmanuel',
+    role: 'Associate Software Engineer',
+    bio: 'Contributes across the Compass codebase, helping build and refine the features students rely on every day.',
+    initials: 'JE',
+  },
+  {
+    name: 'Nkollo Okala Steve',
+    role: 'Associate Software Engineer',
+    bio: 'Works across the stack on Compass, turning feature requirements into reliable, well-tested code.',
+    initials: 'NS',
   },
 ];
 
@@ -159,16 +174,24 @@ export function AboutPage() {
             </div>
           </FadeUp>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {TEAM.map((member, i) => (
               <FadeUp key={member.name} delay={i * 0.1}>
-                <Card className="h-full">
-                  <CardContent className="pt-0 flex flex-col items-center text-center">
-                    <Avatar className="size-20 mb-4 mt-2">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                        {member.initials}
-                      </AvatarFallback>
-                    </Avatar>
+                <Card className="h-full overflow-hidden gap-0 py-0">
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-primary/10">
+                    {member.image ? (
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <span className="text-4xl font-bold text-primary">{member.initials}</span>
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="py-6 text-center">
                     <h3 className="text-lg font-semibold">{member.name}</h3>
                     <p className="text-sm font-medium text-secondary">{member.role}</p>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
@@ -215,8 +238,14 @@ export function AboutPage() {
       </section>
 
       {/* ─── CTA ─── */}
-      <section className="hero-gradient py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative overflow-hidden py-20 sm:py-24">
+        <img
+          src="/carousel_3.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
